@@ -3,7 +3,8 @@ import { Table } from '@instructure/ui'
 import { ISearch, ISliders, IPlus } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
-  SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId
+  SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
+  activityFor, openRequests, schoolsOffering
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -15,13 +16,6 @@ type Props = {
   prefs: Preferences
   onPrefs: (p: Preferences) => void
   onDirty: () => void
-}
-
-const OPEN_REQUESTS: Record<ScopeId, string> = {
-  district: '626',
-  bambusa: '412',
-  panda: '126',
-  meridian: '88'
 }
 
 function Card({
@@ -57,40 +51,19 @@ function Metric({ value, label }: { value: string; label: string }) {
   )
 }
 
-const LEARNERS: Record<ScopeId, string[][]> = {
-  district: [],
-  bambusa: [
-    ['Alex Rivera', '2 days ago', 'In review'],
-    ['Jordan Blake', '5 days ago', 'Fulfilled'],
-    ['Sam Okafor', '1 week ago', 'Awaiting payment']
-  ],
-  panda: [
-    ['Priya Raman', '1 day ago', 'In review'],
-    ['Devon Hart', '3 days ago', 'In review'],
-    ['Nina Castellanos', '6 days ago', 'Fulfilled']
-  ],
-  meridian: [
-    ['Marcus Webb', '4 hours ago', 'Awaiting transcript'],
-    ['Leah Nguyen', '2 days ago', 'Fulfilled'],
-    ['Tom Brady Jr.', '1 week ago', 'In review']
-  ]
-}
+function ScopedTable({ scope, service }: { scope: ScopeId; service: ServiceId }) {
+  const { head, rows, caption } = activityFor(scope, service)
 
-function ScopedTable({ scope }: { scope: ScopeId }) {
-  const district = SCOPES[scope].kind === 'district'
-  const rows = district
-    ? [
-        ['Bambusa University', '412', 'Transcripts, Receive'],
-        ['Panda High School', '126', 'Transcripts, Diplomas, Receive'],
-        ['Meridian Community College', '88', 'Dual Enrollment']
-      ]
-    : LEARNERS[scope]
-  const head = district
-    ? ['School', 'Open requests', 'Services']
-    : ['Learner', 'Submitted', 'Status']
+  if (rows.length === 0) {
+    return (
+      <p style={{ margin: 0, fontSize: 14, color: 'var(--text-mutedcolor)' }}>
+        No school in this district runs {SERVICES[service].name} yet.
+      </p>
+    )
+  }
 
   return (
-    <Table caption={`Recent activity in ${SCOPES[scope].name}`}>
+    <Table caption={caption}>
       <Table.Head>
         <Table.Row>
           {head.map((h) => (
@@ -137,16 +110,31 @@ function SearchCard({ what, where, onDirty }: { what: string; where: string; onD
   )
 }
 
-function WorkspaceCard({ scope, onDirty }: { scope: ScopeId; onDirty: () => void }) {
-  const rows: Array<[string, string, string, 'primary' | 'secondary']> = [
-    [`${OPEN_REQUESTS[scope]} open orders`, 'New orders waiting to be fulfilled.', 'Fulfil open orders', 'primary'],
-    ['Add credentials', 'Upload and match new credential records.', 'Add credentials', 'secondary'],
-    ['Manage learners', 'Review and manage learner records.', 'Manage learners', 'secondary']
-  ]
+function WorkspaceCard({
+  scope,
+  service,
+  onDirty
+}: {
+  scope: ScopeId
+  service: ServiceId
+  onDirty: () => void
+}) {
+  const rows = quickActions(scope, service)
+  const district = SCOPES[scope].kind === 'district'
+  const shown = district ? rows.slice(0, 1) : rows
   return (
-    <Card title="Workspace">
+    <Card
+      title="Workspace"
+      sub={
+        district
+          ? 'District level. Pick a school in the control above to act on individual records.'
+          : undefined
+      }
+    >
       <div>
-        {rows.map(([t, d, cta, kind], i) => (
+        {shown.map(({ label: t, detail: d, cta }, i) => {
+          const kind = i === 0 ? 'primary' : 'secondary'
+          return (
           <div
             key={t}
             style={{
@@ -166,7 +154,8 @@ function WorkspaceCard({ scope, onDirty }: { scope: ScopeId; onDirty: () => void
               {kind === 'secondary' && <IPlus size={18} />} {cta}
             </button>
           </div>
-        ))}
+          )
+        })}
       </div>
     </Card>
   )
@@ -208,6 +197,7 @@ export default function Pages({
   const where = SCOPES[scope].name
   const district = SCOPES[scope].kind === 'district'
   const services = servicesFor(scope, config)
+  const offering = schoolsOffering(workspace as ServiceId)
 
   if (page === 'settings') {
     return (
@@ -221,9 +211,12 @@ export default function Pages({
     <div className="col-side">
       <Card title="At a glance" sub={`${svc.name} at ${where}.`}>
         <div className="metrics">
-          <Metric value={OPEN_REQUESTS[scope]} label="Open requests" />
+          <Metric value={String(openRequests(scope, workspace as ServiceId))} label="Open items" />
           <Metric value={String(services.length)} label="Services here" />
-          <Metric value={district ? '12' : '1'} label="Schools in scope" />
+          <Metric
+            value={district ? `${offering.length} of 3` : '1'}
+            label={district ? 'Schools running it' : 'School in scope'}
+          />
         </div>
       </Card>
 
@@ -250,16 +243,18 @@ export default function Pages({
       <div className="grid2">
         <div className="col-main">
           <SearchCard what={svc.name} where={where} onDirty={onDirty} />
-          {!district && <WorkspaceCard scope={scope} onDirty={onDirty} />}
+          <WorkspaceCard scope={scope} service={workspace as ServiceId} onDirty={onDirty} />
           <Card
-            title={district ? 'Schools in this district' : 'Recent activity'}
+            title={district ? `${svc.name} by school` : 'Recent activity'}
             sub={
               district
-                ? 'Every school rolls up into the numbers above.'
+                ? offering.length === 3
+                  ? 'Every school in the district runs this service.'
+                  : `${offering.length} of 3 schools run this service. The rest are not counted above.`
                 : `Latest ${svc.name.toLowerCase()} activity in ${where}.`
             }
           >
-            <ScopedTable scope={scope} />
+            <ScopedTable scope={scope} service={workspace as ServiceId} />
           </Card>
         </div>
         {side}
@@ -272,7 +267,7 @@ export default function Pages({
       <div className="col-main">
         <SearchCard what={label} where={where} onDirty={onDirty} />
         <Card title={label} sub={`${label} in ${svc.name}, scoped to ${where}.`}>
-          <ScopedTable scope={scope} />
+          <ScopedTable scope={scope} service={workspace as ServiceId} />
         </Card>
       </div>
       {side}

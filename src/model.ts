@@ -68,7 +68,7 @@ export const SCOPES: Record<ScopeId, Scope> = {
     id: 'district',
     name: 'Bambusa District',
     kind: 'district',
-    detail: '12 schools · Denver, Colorado',
+    detail: '3 schools · Denver, Colorado',
     services: ['transcript', 'diploma', 'dualEnrollment', 'receive', 'send', 'verify', 'badges']
   },
   bambusa: {
@@ -128,6 +128,122 @@ export function servicesFor(scope: ScopeId | null, c: Config): ServiceId[] {
   if (!scope || !isAdmin(c)) return []
   const all = SCOPES[scope].services
   return c.multiService ? all : all.slice(0, 1)
+}
+
+export type SchoolId = Exclude<ScopeId, 'district'>
+export const SCHOOL_IDS: SchoolId[] = ['bambusa', 'panda', 'meridian']
+
+/** Which schools in the district actually run a given service. */
+export const schoolsOffering = (s: ServiceId): SchoolId[] =>
+  SCHOOL_IDS.filter((id) => SCOPES[id].services.includes(s))
+
+/**
+ * Open work per school *per service*. The whole argument is that scope and
+ * service are two independent axes, so the dashboard has to be indexed by
+ * both -- a single number per school would quietly repeat the mistake the
+ * nav is trying to fix.
+ */
+const VOLUME: Record<SchoolId, Partial<Record<ServiceId, number>>> = {
+  bambusa: { transcript: 412, diploma: 96, dualEnrollment: 58, receive: 233, send: 174, verify: 61 },
+  panda: { transcript: 126, diploma: 184, receive: 47, badges: 212 },
+  meridian: { transcript: 88, dualEnrollment: 341, receive: 65, send: 29, badges: 73 }
+}
+
+export function openRequests(scope: ScopeId, service: ServiceId): number {
+  if (scope === 'district')
+    return schoolsOffering(service).reduce((n, id) => n + (VOLUME[id][service] ?? 0), 0)
+  return VOLUME[scope as SchoolId][service] ?? 0
+}
+
+/**
+ * Each service tracks a different kind of record, so the activity table has to
+ * change its columns, not just its rows. Reusing "Learner / Submitted / Status"
+ * for Receive and Send would be the same lie as reusing the request count.
+ */
+type ActivityShape = { who: string; when: string; subjects: string[]; statuses: string[] }
+
+const ACTIVITY: Record<ServiceId, ActivityShape> = {
+  transcript: {
+    who: 'Learner',
+    when: 'Submitted',
+    subjects: ['2 days ago', '5 days ago', '1 week ago'],
+    statuses: ['In review', 'Fulfilled', 'Awaiting payment']
+  },
+  diploma: {
+    who: 'Learner',
+    when: 'Ordered',
+    subjects: ['Yesterday', '4 days ago', '2 weeks ago'],
+    statuses: ['Awaiting approval', 'At the printer', 'Shipped']
+  },
+  dualEnrollment: {
+    who: 'Learner',
+    when: 'Course',
+    subjects: ['ENG 101 · Composition', 'MATH 210 · Calculus II', 'BIO 140 · Human Biology'],
+    statuses: ['Enrolled', 'Pending registrar', 'Waitlisted']
+  },
+  receive: {
+    who: 'Sender',
+    when: 'Received',
+    subjects: ['3 hours ago', 'Yesterday', '3 days ago'],
+    statuses: ['Matched to learner', 'Needs matching', 'In review']
+  },
+  send: {
+    who: 'Recipient',
+    when: 'Sent',
+    subjects: ['1 hour ago', '2 days ago', '6 days ago'],
+    statuses: ['Delivered', 'In transit', 'Bounced']
+  },
+  verify: {
+    who: 'Requester',
+    when: 'Requested',
+    subjects: ['Today', '3 days ago', '1 week ago'],
+    statuses: ['Verified', 'Awaiting learner consent', 'Expired']
+  },
+  badges: {
+    who: 'Earner',
+    when: 'Issued',
+    subjects: ['Today', '5 days ago', '2 weeks ago'],
+    statuses: ['Claimed', 'Issued, not claimed', 'Revoked']
+  }
+}
+
+/** Names differ per school so changing scope visibly changes the rows too. */
+const PEOPLE: Record<SchoolId, string[]> = {
+  bambusa: ['Alex Rivera', 'Jordan Blake', 'Sam Okafor'],
+  panda: ['Priya Raman', 'Devon Hart', 'Nina Castellanos'],
+  meridian: ['Marcus Webb', 'Leah Nguyen', 'Tom Ferreira']
+}
+
+const ORGS: Record<SchoolId, string[]> = {
+  bambusa: ['Denver South High', 'Holloway Registrar', 'Cascade Prep'],
+  panda: ['Riverbend Middle', 'Parchment Exchange', 'St. Ive’s Academy'],
+  meridian: ['Northgate High', 'Meridian Admissions', 'Lakeshore District']
+}
+
+export type ActivityTable = { head: [string, string, string]; rows: string[][]; caption: string }
+export function activityFor(scope: ScopeId, service: ServiceId): ActivityTable {
+  const a = ACTIVITY[service]
+
+  if (scope === 'district') {
+    const offering = schoolsOffering(service)
+    return {
+      head: ['School', 'Open items', 'Share of district'],
+      caption: `${SERVICES[service].name} across the district`,
+      rows: offering.map((id) => {
+        const n = VOLUME[id][service] ?? 0
+        const total = openRequests('district', service)
+        return [SCOPES[id].name, String(n), `${Math.round((n / total) * 100)}%`]
+      })
+    }
+  }
+
+  const school = scope as SchoolId
+  const names = a.who === 'Learner' || a.who === 'Earner' ? PEOPLE[school] : ORGS[school]
+  return {
+    head: [a.who, a.when, 'Status'],
+    caption: `Recent ${SERVICES[service].name} activity at ${SCOPES[school].name}`,
+    rows: names.map((n, i) => [n, a.subjects[i], a.statuses[i]])
+  }
 }
 
 export type PageId = string
@@ -348,4 +464,72 @@ export function entitlementSummary(id: ScopeId, c: Config): string {
     return `${role} · ${svc.length} service${svc.length > 1 ? 's' : ''} across 12 schools`
   }
   return `${role} · ${svc.map((s) => SERVICES[s].name).join(', ')}`
+}
+
+/**
+ * The Workspace card used to say "open orders / Add credentials / Manage
+ * learners" no matter which service you were in, which made Badges look like
+ * Transcripts. Each service gets its own primary unit of work.
+ */
+export type QuickAction = { label: string; detail: string; cta: string }
+
+const WORK: Record<ServiceId, { unit: string; rest: QuickAction[] }> = {
+  transcript: {
+    unit: 'open orders',
+    rest: [
+      { label: 'Add credentials', detail: 'Upload and match new transcript records.', cta: 'Add credentials' },
+      { label: 'Manage learners', detail: 'Review and manage learner records.', cta: 'Manage learners' }
+    ]
+  },
+  diploma: {
+    unit: 'diploma orders',
+    rest: [
+      { label: 'Approve a print run', detail: 'Release approved diplomas to the printer.', cta: 'Review print run' },
+      { label: 'Edit the template', detail: 'Seal, signatures and wording.', cta: 'Edit template' }
+    ]
+  },
+  dualEnrollment: {
+    unit: 'enrolment requests',
+    rest: [
+      { label: 'Open the course catalogue', detail: 'Courses offered to secondary learners.', cta: 'Open catalogue' },
+      { label: 'Confirm the term', detail: 'Registration windows and deadlines.', cta: 'Confirm dates' }
+    ]
+  },
+  receive: {
+    unit: 'documents to match',
+    rest: [
+      { label: 'Resolve unmatched documents', detail: 'Incoming records with no learner attached.', cta: 'Resolve' },
+      { label: 'Set matching rules', detail: 'How inbound records find a learner.', cta: 'Edit rules' }
+    ]
+  },
+  send: {
+    unit: 'outbound deliveries',
+    rest: [
+      { label: 'Retry bounced deliveries', detail: 'Recipients that rejected a send.', cta: 'Retry' },
+      { label: 'Manage recipients', detail: 'Destinations this school sends to.', cta: 'Manage recipients' }
+    ]
+  },
+  verify: {
+    unit: 'verification requests',
+    rest: [
+      { label: 'Chase learner consent', detail: 'Requests waiting on the learner.', cta: 'Send reminder' },
+      { label: 'Download the audit log', detail: 'Every verification and its outcome.', cta: 'Download log' }
+    ]
+  },
+  badges: {
+    unit: 'badges to issue',
+    rest: [
+      { label: 'Open the badge catalogue', detail: 'Badges this school can award.', cta: 'Open catalogue' },
+      { label: 'Nudge unclaimed earners', detail: 'Badges issued but never claimed.', cta: 'Send reminder' }
+    ]
+  }
+}
+
+export function quickActions(scope: ScopeId, service: ServiceId): QuickAction[] {
+  const w = WORK[service]
+  const n = openRequests(scope, service)
+  return [
+    { label: `${n} ${w.unit}`, detail: `Waiting on you in ${SCOPES[scope].name}.`, cta: 'Open the queue' },
+    ...w.rest
+  ]
 }
