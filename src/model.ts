@@ -259,11 +259,12 @@ export type WorkspaceId = ServiceId | 'learner' | 'platform'
 
 export const WORKSPACES: Record<
   WorkspaceId,
-  { id: WorkspaceId; name: string; scoped: boolean; pages: NavItem[] }
+  { id: WorkspaceId; name: string; scoped: boolean; icon: string; pages: NavItem[] }
 > = {
   transcript: {
     id: 'transcript',
     name: 'Transcript Services',
+    icon: 'file',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -276,6 +277,7 @@ export const WORKSPACES: Record<
   diploma: {
     id: 'diploma',
     name: 'Diploma Services',
+    icon: 'award',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -287,6 +289,7 @@ export const WORKSPACES: Record<
   dualEnrollment: {
     id: 'dualEnrollment',
     name: 'Dual Enrollment',
+    icon: 'book',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -298,6 +301,7 @@ export const WORKSPACES: Record<
   receive: {
     id: 'receive',
     name: 'Receive',
+    icon: 'inbox',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -308,6 +312,7 @@ export const WORKSPACES: Record<
   send: {
     id: 'send',
     name: 'Send',
+    icon: 'external',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -319,6 +324,7 @@ export const WORKSPACES: Record<
   verify: {
     id: 'verify',
     name: 'Credential Verification',
+    icon: 'search',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -329,6 +335,7 @@ export const WORKSPACES: Record<
   badges: {
     id: 'badges',
     name: 'Badges & Certificates',
+    icon: 'check',
     scoped: true,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -341,6 +348,7 @@ export const WORKSPACES: Record<
   learner: {
     id: 'learner',
     name: 'My Parchment account',
+    icon: 'user',
     scoped: false,
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -353,6 +361,7 @@ export const WORKSPACES: Record<
   platform: {
     id: 'platform',
     name: 'Platform Settings',
+    icon: 'settings',
     scoped: false,
     pages: [
       { id: 'dashboard', label: 'Overview', icon: 'dashboard' },

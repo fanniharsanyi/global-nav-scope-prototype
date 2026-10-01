@@ -956,16 +956,83 @@ button.gnav__institution:focus-visible {
 }
 
 /* where you start — per-service default school rows */
-.startrow {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
+.wys__set { margin: 0; padding: 0; border: 0; }
+.wys__legend,
+.wys__set > legend {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-.startrow__crest {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  height: var(--input-height, 40px);
+
+.wys__list {
+  display: flex; flex-direction: column; gap: 8px;
+  margin: 0; padding: 0; list-style: none;
 }
-.startrow__select { flex: 1 1 auto; min-width: 0; }
+
+.wys__row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #c7cdd1;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #fff;
+}
+.wys__row:hover { background: #f4f6f8; }
+.wys__row--on {
+  border-color: #1d354f;
+  box-shadow: inset 0 0 0 1px #1d354f;
+}
+
+.wys__radio {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.wys__dot {
+  position: relative; flex: 0 0 auto;
+  width: 20px; height: 20px;
+  border: 1px solid #6b7780; border-radius: 50%;
+  background: #fff;
+}
+.wys__radio:checked + .wys__dot { border: 2px solid #1d354f; }
+.wys__radio:checked + .wys__dot::after {
+  content: ''; position: absolute; inset: 3px;
+  border-radius: 50%; background: #1d354f;
+}
+.wys__radio:focus-visible + .wys__dot {
+  outline: 2px solid #2b7abc; outline-offset: 2px;
+}
+
+.wys__icon {
+  display: flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; color: #273540;
+}
+
+.wys__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wys__name { font-size: 16px; font-weight: 700; color: #273540; }
+.wys__desc { font-size: 14px; line-height: 1.4; color: #576773; }
+
+.wys__schools {
+  margin-top: 28px; padding-top: 28px;
+  border-top: 1px solid #e2e6e9;
+}
+
+.wys__school-row {
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: 14px;
+  padding: 8px 0;
+}
+.wys__school-label {
+  display: inline-flex; align-items: center; gap: 14px;
+  font-size: 16px; font-weight: 700; color: #273540;
+}
+.wys__school-control {
+  display: inline-flex; align-items: center; gap: 8px;
+  flex: 1 1 260px; min-width: 0; justify-content: flex-end;
+}
+.wys__crest {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; flex: 0 0 auto;
+  border-radius: 8px; background: #f5f7f9; border: 1px solid #e2e6e9;
+}
+.wys__school-control > span:last-child { flex: 0 1 280px; min-width: 0; }
+
 .ctx__foot { margin-inline-end: auto; display: flex; align-items: center; }
