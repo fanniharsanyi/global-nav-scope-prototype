@@ -784,6 +784,7 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   background: var(--nav-border-color);
   margin: var(--space-xs) 0;
 }
+.gnav__profile + div { margin-top: var(--space-lg); }
 .gnav__panel-section-title {
   font-size: 11px;
   letter-spacing: .06em;
@@ -879,3 +880,92 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   align-items: center;
   color: var(--text-mutedcolor);
 }
+
+/* ---- switch, from the reference build ---- */
+.toggle{display:inline-flex;align-items:center;width:44px;height:24px;padding:2px;border:1px solid var(--input-border-color,#c7cdd1);border-radius:999px;background:#eef1f4;cursor:pointer;flex-shrink:0;transition:background .12s ease,border-color .12s ease}
+.toggle--on{background:var(--button-primary-bg);border-color:var(--button-primary-bg);justify-content:flex-end}
+.toggle__knob{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#fff;color:var(--text-mutedcolor);box-shadow:0 1px 2px #0003}
+.toggle:focus-visible{outline:var(--focus-outline-width) solid var(--focus-outline-color);outline-offset:2px}
+
+/* ---- display preferences ---- */
+[data-ui-dyslexic='true'] {
+  --fontfamily-heading: "OpenDyslexic", "Atkinson Hyperlegible Next", "Comic Sans MS", system-ui, sans-serif;
+  --fontfamily-base: "OpenDyslexic", "Atkinson Hyperlegible Next", "Comic Sans MS", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  word-spacing: 0.08em;
+}
+[data-ui-contrast='true'] {
+  --heading-basecolor: #000000;
+  --text-mutedcolor: #000000;
+  --nav-border-color: #000000;
+  --nav-border-width: 2px;
+  --icon-sidenav-color: #000000;
+  --button-primary-bg: #000000;
+  --badge-color-primary: #000000;
+  --text-link-color: #0b3d91;
+  --focus-outline-color: #0b3d91;
+  --focus-outline-width: 3px;
+  --background-pagecolor: #ffffff;
+  --shadow-elevation1: none;
+}
+[data-ui-contrast='true'] .gnav__rail { filter: none; }
+[data-ui-dark='true'] {
+  --heading-basecolor: #f2f4f5;
+  --text-mutedcolor: #b4bec6;
+  --background-pagecolor: #10171f;
+  --background-containercolor: #1b242e;
+  --nav-bg: #1b242e;
+  --nav-border-color: #33414e;
+  --icon-sidenav-color: #cfd8e0;
+  --button-primary-bg: #4a90d9;
+  --badge-color-primary: #4a90d9;
+  --text-link-color: #8ec5ff;
+  --shadow-elevation1: 0 1px 2px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.35);
+}
+[data-ui-dark='true'] .toggle { background: #2a3745; border-color: #46545f; }
+[data-ui-dark='true'] .toggle__knob { background: #e8edf2; color: #1b242e; }
+[data-ui-dark='true'] .gnav__item--active { background: var(--button-primary-bg); color: #0d141b; }
+[data-ui-dark='true'] .gnav__item:hover,
+[data-ui-dark='true'] .gnav__panel-link:hover,
+[data-ui-dark='true'] .gnav__institution:hover,
+[data-ui-dark='true'] .gnav__account:hover,
+[data-ui-dark='true'] .gnav__collapse:hover,
+[data-ui-dark='true'] .gnav__toggle:hover { background: #2a3745; }
+
+/* Surfaces that hard-code a light value need an explicit dark counterpart,
+   including InstUI's own table chrome, which does not read our tokens. */
+[data-ui-dark='true'] {
+  --surface-raised: #232e3a;
+  --surface-line: #3c4a57;
+}
+[data-ui-dark='true'] .gnav__account--active,
+[data-ui-dark='true'] .gnav__account:hover { background: #2a3745; }
+[data-ui-dark='true'] .tagpill,
+[data-ui-dark='true'] .rolepill,
+[data-ui-dark='true'] .gnav__profile-badge,
+[data-ui-dark='true'] .metric,
+[data-ui-dark='true'] .gnav__card,
+[data-ui-dark='true'] .gnav__scope-switch {
+  background: var(--surface-raised);
+  border-color: var(--surface-line);
+  color: var(--heading-basecolor);
+}
+[data-ui-dark='true'] .gnav__scope-switch:hover { background: #2f3d4b; }
+[data-ui-dark='true'] .srch,
+[data-ui-dark='true'] .wrap__content input,
+[data-ui-dark='true'] .wrap__content select,
+[data-ui-dark='true'] .wrap__content textarea {
+  background: var(--surface-raised);
+  border-color: var(--surface-line);
+  color: var(--heading-basecolor);
+}
+[data-ui-dark='true'] .wrap__content table,
+[data-ui-dark='true'] .wrap__content th,
+[data-ui-dark='true'] .wrap__content td,
+[data-ui-dark='true'] .wrap__content thead,
+[data-ui-dark='true'] .wrap__content tbody tr {
+  background: transparent;
+  border-color: var(--surface-line);
+  color: var(--heading-basecolor);
+}
+[data-ui-dark='true'] .wrap__content table { background: var(--surface-raised); }

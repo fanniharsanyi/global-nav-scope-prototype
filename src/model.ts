@@ -401,12 +401,21 @@ export type Preferences = {
   defaultSchoolByService: Partial<Record<WorkspaceId, ScopeId>>
   /** Overrides the saved default with wherever you were last. */
   resumeLast: boolean
+  /** Display preferences. These are the user's, so they follow the account. */
+  ui: UiPreferences
+}
+
+export type UiPreferences = {
+  dark: boolean
+  dyslexic: boolean
+  highContrast: boolean
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   defaultService: null,
   defaultSchoolByService: {},
-  resumeLast: true
+  resumeLast: true,
+  ui: { dark: false, dyslexic: false, highContrast: false }
 }
 
 /**

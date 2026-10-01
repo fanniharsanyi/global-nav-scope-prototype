@@ -4,17 +4,31 @@ import { View, Alert, Tooltip } from '@instructure/ui'
 import {
   IDashboard, IFile, IAward, IUsers, IInbox, IHelp, IUser, ISettings,
   IBell, IMaximize, IUpDown, IPanelClose, ILogOut, IChevronRight,
-  IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery
+  IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery,
+  IMoon, ITextSize, IContrast, ICheck, IX, ISliders
 } from './Icons'
 import {
-  type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
-  SCOPES, WORKSPACES, USER, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner,
+  type Config, type PageId, type Preferences, type ScopeId, type UiPreferences,
+  type WorkspaceId,
+  SCOPES, WORKSPACES, USER, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner, isAdmin,
   resolveStart
 } from './model'
 import ContextModal from './ContextModal'
 import Pages from './Pages'
 import Crest from './Crest'
 import BrowserChrome from './BrowserChrome'
+
+/** Pages that belong to the person, not to a school or a service. */
+const ACCOUNT_PAGES: Record<string, string | undefined> = {
+  account: 'Account settings',
+  notifications: 'Notifications'
+}
+
+const UI_PREFS: { key: keyof UiPreferences; label: string; Icon: typeof IDashboard }[] = [
+  { key: 'dark', label: 'Dark mode', Icon: IMoon },
+  { key: 'dyslexic', label: 'Use dyslexia friendly font', Icon: ITextSize },
+  { key: 'highContrast', label: 'Use high contrast UI', Icon: IContrast }
+]
 
 const ICONS: Record<string, typeof IDashboard> = {
   dashboard: IDashboard,
@@ -138,7 +152,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   )
 
   return (
-    <BrowserChrome tabTitle={page === 'account' ? 'Account settings' : current?.label ?? 'Dashboard'}>
+    <BrowserChrome tabTitle={ACCOUNT_PAGES[page] ?? current?.label ?? 'Dashboard'}>
       <div
         className="wrap"
         onKeyDown={(e) => {
@@ -310,15 +324,29 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
 
           {subNavOpen && (
             <div className="gnav__panel" role="region" aria-label="Account">
-              <h2 className="gnav__panel-title" tabIndex={-1} ref={panelTitle}>
-                Account
-              </h2>
+              <div className="gnav__panel-head">
+                <h2 className="gnav__panel-title" tabIndex={-1} ref={panelTitle}>
+                  Account
+                </h2>
+                <button
+                  type="button"
+                  className="gnav__toggle gnav__toggle--panel"
+                  aria-label="Close account panel"
+                  onClick={closeSubNav}
+                >
+                  <IPanelClose size={20} />
+                </button>
+              </div>
 
-              <div className="gnav__card">
-                <div style={{ fontWeight: 600, fontSize: 18 }}>{USER.name}</div>
-                <div className="gnav__account-role">{USER.email}</div>
-                <div style={{ marginTop: 8 }}>
-                  <span className="rolepill">{roleLabel(scope, config)}</span>
+              <div className="gnav__profile">
+                <div className="gnav__profile-card gnav__profile-card--static">
+                  <span className="gnav__profile-text">
+                    <span className="gnav__profile-name">{USER.name}</span>
+                    <span className="gnav__profile-email">{USER.email}</span>
+                    <span className="gnav__profile-tags">
+                      <span className="gnav__profile-badge">{roleLabel(scope, config)}</span>
+                    </span>
+                  </span>
                 </div>
               </div>
 
@@ -356,7 +384,8 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 </div>
               )}
 
-              <div>
+              <ul className="gnav__panel-menu">
+                <li>
                 <button
                   type="button"
                   className="gnav__panel-link"
@@ -374,6 +403,20 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 >
                   <IUser /> My Parchment account
                 </button>
+                </li>
+                <li>
+                <button
+                  type="button"
+                  className="gnav__panel-link"
+                  onClick={() => {
+                    setPage('notifications')
+                    closeSubNav()
+                  }}
+                >
+                  <IBell /> Notifications
+                </button>
+                </li>
+                <li>
                 <button
                   type="button"
                   className="gnav__panel-link"
@@ -384,9 +427,55 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 >
                   <ISettings /> Account settings
                 </button>
-              </div>
+                </li>
+                <li>
+                <button
+                  type="button"
+                  className="gnav__panel-link"
+                  disabled={!isAdmin(config)}
+                  title={
+                    isAdmin(config)
+                      ? undefined
+                      : 'Only administrators can reach platform settings.'
+                  }
+                  onClick={() => {
+                    setWorkspace('platform')
+                    setPage('dashboard')
+                    closeSubNav()
+                  }}
+                >
+                  <ISliders /> Platform settings
+                </button>
+                </li>
+              </ul>
 
               <div className="gnav__panel-ui">
+                <p className="gnav__panel-section" id="ui-prefs">
+                  User interface
+                </p>
+                <div role="group" aria-labelledby="ui-prefs">
+                  {UI_PREFS.map(({ key, label, Icon }) => (
+                    <div className="gnav__ui-row" key={key}>
+                      <span className="gnav__ui-label">
+                        <Icon /> {label}
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={prefs.ui[key]}
+                        aria-label={label}
+                        className={`toggle${prefs.ui[key] ? ' toggle--on' : ''}`}
+                        onClick={() =>
+                          onPrefs({ ...prefs, ui: { ...prefs.ui, [key]: !prefs.ui[key] } })
+                        }
+                      >
+                        <span className="toggle__knob">
+                          {prefs.ui[key] ? <ICheck size={14} /> : <IX size={14} />}
+                        </span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
                 <button type="button" className="gnav__logout" onClick={onSignOut}>
                   <ILogOut /> Log out
                 </button>
@@ -399,9 +488,9 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
           <div className="wrap__content">
             <div className="wrap__topbar">
               <span className="wrap__titleblock">
-                <span className="wrap__eyebrow">{page === 'account' ? USER.name : ws.name}</span>
+                <span className="wrap__eyebrow">{ACCOUNT_PAGES[page] ? USER.name : ws.name}</span>
                 <h1 className="wrap__title">
-                  {page === 'account' ? 'Account settings' : current?.label ?? 'Dashboard'}
+                  {ACCOUNT_PAGES[page] ?? current?.label ?? 'Dashboard'}
                 </h1>
               </span>
               <div className="wrap__actions">

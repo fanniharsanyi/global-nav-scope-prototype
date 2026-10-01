@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { InstUISettingsProvider } from '@instructure/ui'
 import SignIn from './SignIn'
 import Shell from './Shell'
-import { parchment } from './theme'
+import { themeFor } from './theme'
 import { DEFAULT_PREFERENCES, type Config, type Preferences } from './model'
 
 const KEY = 'parchment.prefs'
@@ -31,8 +31,17 @@ export default function App() {
     }
   }, [prefs])
 
+  // Display preferences belong to the person, so they apply to the whole
+  // document rather than to one service's pages.
+  useEffect(() => {
+    const el = document.documentElement
+    el.dataset.uiDark = String(prefs.ui.dark)
+    el.dataset.uiDyslexic = String(prefs.ui.dyslexic)
+    el.dataset.uiContrast = String(prefs.ui.highContrast)
+  }, [prefs.ui])
+
   return (
-    <InstUISettingsProvider theme={parchment}>
+    <InstUISettingsProvider theme={themeFor(prefs.ui)}>
       {config ? (
         <Shell
           config={config}

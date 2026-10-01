@@ -185,6 +185,51 @@ export default function Pages({
   /* Workspaces that are not tied to a school. The scope control still exists in
      the rail, it just has nothing to act on here, and the page says so. */
   if (!ws.scoped) {
+    if (workspace === 'platform') {
+      if (page === 'organization') {
+        return (
+          <Card title="Organization" sub="Districts, schools and how they roll up. Applies everywhere, not to one school.">
+            <Text as="p" color="secondary">
+              Platform settings sit above the school and service axes, so the control in the rail is
+              greyed out here rather than hidden. Nothing you change on this page is scoped to a
+              single school.
+            </Text>
+          </Card>
+        )
+      }
+      if (page === 'users') {
+        return (
+          <Card title="Users" sub="Everyone with a sign-in, and what each of them can reach.">
+            <Text as="p" color="secondary">
+              A person's scope and services are granted here. That grant is what decides which
+              options they see in the school and service control.
+            </Text>
+          </Card>
+        )
+      }
+      if (page === 'settings') {
+        return (
+          <Card title="Platform settings" sub="Defaults that apply to every school and every service.">
+            <Text as="p" color="secondary">
+              Branding, authentication and retention live here. Service level settings stay inside
+              each service so they can differ per school.
+            </Text>
+          </Card>
+        )
+      }
+      return (
+        <Card
+          title="Overview"
+          sub="Settings that sit above every school and service, so the scope control has nothing to act on here."
+        >
+          <div className="metrics">
+            <Metric value="3" label="Schools" />
+            <Metric value="7" label="Services in use" />
+            <Metric value="48" label="People with a sign-in" />
+          </div>
+        </Card>
+      )
+    }
     if (page === 'settings') {
       return (
         <Card title="Settings" sub="Settings for your own Parchment account.">

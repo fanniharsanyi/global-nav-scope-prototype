@@ -234,3 +234,29 @@ export const IMastery = ({ size = 20, ...rest }: P) => (
     ))}
   </svg>
 )
+
+export const IMoon = (p: P) => (
+  <S {...p}>
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+  </S>
+)
+
+export const ITextSize = (p: P) => (
+  <S {...p}>
+    <path d="M3 18 7.5 7l4.5 11M4.4 14.5h6.2" />
+    <path d="M14 18l3-7.5 3 7.5M14.9 15.6h4.2" />
+  </S>
+)
+
+export const IContrast = (p: P) => (
+  <S {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none" />
+  </S>
+)
+
+export const IX = (p: P) => (
+  <S {...p}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </S>
+)
