@@ -116,15 +116,20 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   if (config.hasMastery) products.push({ id: 'mastery', label: 'Mastery', Icon: IMastery })
 
   const canChangeContext = canSwitch || workspacesFor(scope, config).length > 1
+  const [railOpen, setRailOpen] = useState(true)
 
   const railContext = (
     <>
-      <Crest size={32} />
-      <span className="gnav__ctx-text">
-        <span className="gnav__ctx-school">{ws.scoped ? scopeName : 'Parchment'}</span>
-        <span className="gnav__ctx-service">{ws.name}</span>
+      <span className="gnav__avatar gnav__avatar--rect" aria-hidden="true">
+        <Crest size={32} />
       </span>
-      {canChangeContext && (
+      {railOpen && (
+        <span className="gnav__ctx-text">
+          <span className="gnav__ctx-school">{ws.scoped ? scopeName : 'Parchment'}</span>
+          <span className="gnav__ctx-service">{ws.name}</span>
+        </span>
+      )}
+      {canChangeContext && railOpen && (
         <span className="gnav__institution-caret">
           <IUpDown size={18} />
         </span>
@@ -144,13 +149,29 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
           Skip to main content
         </a>
 
-        <div className="gnav">
+        <div className={`gnav${railOpen ? ' gnav--expanded' : ''}`}>
           <nav className="gnav__rail" aria-label="Global">
+            {railOpen && (
+              <button
+                type="button"
+                className="gnav__toggle"
+                aria-label="Collapse sidebar, top of nav"
+                aria-expanded={railOpen}
+                onClick={() => setRailOpen(false)}
+              >
+                <IPanelClose size={20} />
+              </button>
+            )}
+
             {canChangeContext ? (
               <button
                 type="button"
-                className="gnav__institution gnav__institution--ctx"
+                className="gnav__institution gnav__institution--switch gnav__institution--ctx"
                 ref={scopeTrigger}
+                title={`${ws.scoped ? scopeName : 'Parchment'} — ${ws.name} — change school or service`}
+                aria-label={`School: ${ws.scoped ? scopeName : 'Parchment'}. Service: ${ws.name}. Change school or service`}
+                aria-haspopup="dialog"
+                aria-expanded={modalOpen}
                 onClick={() => setModalOpen(true)}
               >
                 {railContext}
@@ -163,20 +184,24 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               type="button"
               ref={accountBtn}
               className={`gnav__account${subNavOpen ? ' gnav__account--active' : ''}`}
+              title={USER.name}
+              aria-label={`Account: ${USER.name}`}
               aria-expanded={subNavOpen}
               onClick={() => (subNavOpen ? closeSubNav() : setSubNavOpen(true))}
             >
-              <span className="gnav__avatar" aria-hidden="true">
+              <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
                 {initials(USER.name)}
               </span>
-              <span style={{ minWidth: 0 }}>
-                <span className="gnav__account-name" style={{ display: 'block' }}>
-                  {USER.name}
+              {railOpen && (
+                <span className="gnav__account-data">
+                  <span className="gnav__account-name" style={{ display: 'block' }}>
+                    {USER.name}
+                  </span>
+                  <span className="gnav__account-role" style={{ display: 'block' }}>
+                    {roleLabel(scope, config)}
+                  </span>
                 </span>
-                <span className="gnav__account-role" style={{ display: 'block' }}>
-                  {roleLabel(scope, config)}
-                </span>
-              </span>
+              )}
             </button>
 
             <ul className="gnav__items">
@@ -188,6 +213,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     <a
                       className={`gnav__item${active ? ' gnav__item--active' : ''}`}
                       href={`#${i.id}`}
+                      aria-label={i.label}
                       aria-current={active ? 'page' : undefined}
                       onClick={(e) => {
                         e.preventDefault()
@@ -195,8 +221,10 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                         setSubNavOpen(false)
                       }}
                     >
-                      <Icon />
-                      <span>{i.label}</span>
+                      <span className="gnav__iconwrap">
+                        <Icon />
+                      </span>
+                      {railOpen && <span className="gnav__item-label">{i.label}</span>}
                     </a>
                   </li>
                 )
@@ -206,7 +234,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
             {products.length > 0 && (
               <>
                 <div className="gnav__grouprule" role="presentation" />
-                <h2 className="gnav__grouplabel" id="other-products">
+                <h2 className={railOpen ? 'gnav__grouplabel' : 'sr'} id="other-products">
                   Other products
                 </h2>
                 <ul className="gnav__items gnav__items--products" aria-labelledby="other-products">
@@ -215,6 +243,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                       <a
                         className="gnav__item gnav__item--product"
                         href={`#${p.id}`}
+                        aria-label={`${p.label}, opens in a new tab`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
@@ -225,12 +254,16 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                           )
                         }}
                       >
-                        <p.Icon />
-                        <span>{p.label}</span>
-                        <span className="gnav__item-ext">
-                          <IExternal size={14} />
-                          <span className="sr">Opens in a new tab</span>
+                        <span className="gnav__iconwrap">
+                          <p.Icon />
                         </span>
+                        {railOpen && <span className="gnav__item-label">{p.label}</span>}
+                        {railOpen && (
+                          <span className="gnav__item-ext">
+                            <IExternal size={14} />
+                            <span className="sr">Opens in a new tab</span>
+                          </span>
+                        )}
                       </a>
                     </li>
                   ))}
@@ -241,21 +274,37 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
             <div className="gnav__grouprule" role="presentation" />
             <ul className="gnav__items">
               <li>
-                <a className="gnav__item" href="#help" onClick={(e) => e.preventDefault()}>
-                  <IHelp />
-                  <span>Help</span>
+                <a
+                  className="gnav__item"
+                  href="#help"
+                  aria-label="Help"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <span className="gnav__iconwrap">
+                    <IHelp />
+                  </span>
+                  {railOpen && <span className="gnav__item-label">Help</span>}
                 </a>
               </li>
             </ul>
 
-            <button type="button" className="gnav__collapse">
-              <IPanelClose />
-              <span>Collapse sidebar</span>
+            <button
+              type="button"
+              className="gnav__collapse"
+              aria-label={railOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              aria-expanded={railOpen}
+              onClick={() => setRailOpen((v) => !v)}
+            >
+              <span className={railOpen ? undefined : 'gnav__collapse-flip'}>
+                <IPanelClose />
+              </span>
+              {railOpen && <span className="gnav__collapse-label">Collapse sidebar</span>}
             </button>
-            <div className="gnav__divider" />
             <div className="gnav__product">
-              <span className="gnav__product-dot" aria-hidden="true" />
-              <span className="gnav__product-name">Parchment</span>
+              <span className="gnav__product-lockup">
+                <span className="gnav__product-mark" aria-hidden="true" />
+                {railOpen && <span className="gnav__product-name">Parchment</span>}
+              </span>
             </div>
           </nav>
 
