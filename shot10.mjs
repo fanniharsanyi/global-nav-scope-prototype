@@ -1,7 +1,7 @@
 import { chromium } from 'playwright'
 const b = await chromium.launch()
 const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
-await p.goto('http://localhost:5177/parchment-instui-scope-prototype/')
+await p.goto('http://localhost:5177/global-nav-scope-prototype/')
 await p.locator('button', { hasText: /continue/i }).last().click()
 await p.waitForTimeout(600)
 

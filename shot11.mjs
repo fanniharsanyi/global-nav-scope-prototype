@@ -2,7 +2,7 @@ import { chromium } from 'playwright'
 const b = await chromium.launch()
 const ctx = await b.newContext({ viewport: { width: 1440, height: 980 } })
 const p = await ctx.newPage()
-const URL = 'http://localhost:5177/parchment-instui-scope-prototype/'
+const URL = 'http://localhost:5177/global-nav-scope-prototype/'
 
 async function signIn() {
   await p.goto(URL)
