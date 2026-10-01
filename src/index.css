@@ -79,7 +79,8 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   display: flex;
   align-items: stretch;
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
   background: var(--background-pagecolor);
 }
 
@@ -186,12 +187,11 @@ button.gnav__institution:hover { background: #f2f4f5; }
   justify-content: center;
   width: 32px; height: 32px;
   flex-shrink: 0;
-  border-radius: 50%;
-  border: 1px solid #8d959f;
-  background: #fff;
+  border-radius: 999px;
+  background: var(--badge-color-primary, #2b7abc);
   font-weight: var(--fontweight-body-strong);
-  font-size: 13px;
-  color: var(--heading-basecolor);
+  font-size: 12px;
+  color: #fff;
 }
 .gnav__account-name {
   font-size: 14px;
@@ -253,18 +253,28 @@ button.gnav__institution:focus-visible {
 .gnav__product {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-sm);
   width: 100%;
   height: 60px;
-  padding: 4px var(--nav-item-h-padding);
+  padding: 4px 0;
   border-top: 1px solid var(--nav-border-color);
   flex-shrink: 0;
 }
 .gnav__product-dot {
-  width: 24px; height: 24px;
-  border-radius: 6px;
-  background: var(--button-primary-bg);
+  position: relative;
+  width: 22px; height: 16px;
+  border: 2px solid var(--heading-basecolor);
+  border-radius: 4px;
   flex-shrink: 0;
+}
+.gnav__product-dot::after {
+  content: "";
+  position: absolute;
+  left: 3px; top: 4px;
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: var(--heading-basecolor);
 }
 .gnav__product-name {
   font-family: var(--fontfamily-heading);
@@ -843,7 +853,7 @@ button.gnav__institution:focus-visible {
 }
 .gnav__ctx-service {
   font-family: var(--fontfamily-heading);
-  font-weight: 700;
+  font-weight: var(--fontweight-body-strong);
   font-size: 16px;
   line-height: 1.25;
   color: var(--heading-basecolor);
