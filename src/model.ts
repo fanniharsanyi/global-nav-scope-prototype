@@ -1,4 +1,11 @@
-export type ServiceId = 'transcript' | 'diploma' | 'dualEnrollment' | 'receive'
+export type ServiceId =
+  | 'transcript'
+  | 'diploma'
+  | 'dualEnrollment'
+  | 'receive'
+  | 'send'
+  | 'verify'
+  | 'badges'
 
 export const SERVICES: Record<ServiceId, { id: ServiceId; name: string; blurb: string }> = {
   transcript: {
@@ -20,6 +27,21 @@ export const SERVICES: Record<ServiceId, { id: ServiceId; name: string; blurb: s
     id: 'receive',
     name: 'Receive',
     blurb: 'Review inbound documents from other institutions.'
+  },
+  send: {
+    id: 'send',
+    name: 'Send',
+    blurb: 'Send credentials to employers, agencies and other schools.'
+  },
+  verify: {
+    id: 'verify',
+    name: 'Credential Verification',
+    blurb: 'Answer third-party verification requests for degrees and enrolment.'
+  },
+  badges: {
+    id: 'badges',
+    name: 'Badges & Certificates',
+    blurb: 'Issue digital badges and micro-credentials.'
   }
 }
 
@@ -47,28 +69,28 @@ export const SCOPES: Record<ScopeId, Scope> = {
     name: 'Bambusa District',
     kind: 'district',
     detail: '12 schools · Denver, Colorado',
-    services: ['transcript', 'diploma', 'dualEnrollment', 'receive']
+    services: ['transcript', 'diploma', 'dualEnrollment', 'receive', 'send', 'verify', 'badges']
   },
   bambusa: {
     id: 'bambusa',
     name: 'Bambusa University',
     kind: 'school',
     detail: '4-year private · 18,400 learners',
-    services: ['transcript', 'diploma', 'dualEnrollment', 'receive']
+    services: ['transcript', 'diploma', 'dualEnrollment', 'receive', 'send', 'verify']
   },
   panda: {
     id: 'panda',
     name: 'Panda High School',
     kind: 'school',
     detail: 'Secondary · 1,260 learners',
-    services: ['transcript', 'diploma', 'receive']
+    services: ['transcript', 'diploma', 'receive', 'badges']
   },
   meridian: {
     id: 'meridian',
     name: 'Meridian Community College',
     kind: 'school',
     detail: '2-year public · 9,700 learners',
-    services: ['transcript', 'dualEnrollment', 'receive']
+    services: ['transcript', 'dualEnrollment', 'receive', 'send', 'badges']
   }
 }
 
@@ -164,6 +186,39 @@ export const WORKSPACES: Record<
     pages: [
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
       { id: 'learners', label: 'Documents received', icon: 'inbox' },
+      { id: 'settings', label: 'Settings', icon: 'settings' }
+    ]
+  },
+  send: {
+    id: 'send',
+    name: 'Send',
+    scoped: true,
+    pages: [
+      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { id: 'outbound', label: 'Outbound', icon: 'file' },
+      { id: 'recipients', label: 'Recipients', icon: 'building' },
+      { id: 'settings', label: 'Settings', icon: 'settings' }
+    ]
+  },
+  verify: {
+    id: 'verify',
+    name: 'Credential Verification',
+    scoped: true,
+    pages: [
+      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { id: 'requests', label: 'Requests', icon: 'inbox' },
+      { id: 'reports', label: 'Reports', icon: 'chart' }
+    ]
+  },
+  badges: {
+    id: 'badges',
+    name: 'Badges & Certificates',
+    scoped: true,
+    pages: [
+      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { id: 'catalog', label: 'Badge catalog', icon: 'award' },
+      { id: 'issued', label: 'Issued', icon: 'file' },
+      { id: 'learners', label: 'Earners', icon: 'users' },
       { id: 'settings', label: 'Settings', icon: 'settings' }
     ]
   },
