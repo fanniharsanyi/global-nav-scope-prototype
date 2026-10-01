@@ -58,7 +58,8 @@ await p.keyboard.press('Escape')
 await p.waitForTimeout(300)
 
 // per-service default school panel
-await p.locator('.gnav__item', { hasText: /^Settings$/ }).first().click().catch(()=>{})
+await p.locator('.gnav__account').click(); await p.waitForTimeout(300)
+await p.locator('.gnav__panel-link').filter({ hasText: /Account settings/ }).click()
 await p.waitForTimeout(600)
 const heads = await p.locator('h2, h3').allInnerTexts()
 console.log('5. settings headings:', heads.filter(h=>/where you start|default school/i.test(h)))

@@ -133,7 +133,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   )
 
   return (
-    <BrowserChrome tabTitle={current?.label ?? 'Account Settings'}>
+    <BrowserChrome tabTitle={page === 'account' ? 'Account settings' : current?.label ?? 'Dashboard'}>
       <div
         className="wrap"
         onKeyDown={(e) => {
@@ -312,6 +312,11 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   type="button"
                   className="gnav__panel-link"
                   disabled={!isLearner(config)}
+                  title={
+                    isLearner(config)
+                      ? undefined
+                      : 'This sign-in has no learner account of its own.'
+                  }
                   onClick={() => {
                     setWorkspace('learner')
                     setPage('records')
@@ -324,12 +329,11 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   type="button"
                   className="gnav__panel-link"
                   onClick={() => {
-                    setPage('settings')
+                    setPage('account')
                     closeSubNav()
                   }}
-                  disabled={!items.some((i) => i.id === 'settings')}
                 >
-                  <ISettings /> Account Settings
+                  <ISettings /> Account settings
                 </button>
               </div>
 
@@ -346,8 +350,10 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
           <div className="wrap__content">
             <div className="wrap__topbar">
               <span className="wrap__titleblock">
-                <span className="wrap__eyebrow">{ws.name}</span>
-                <h1 className="wrap__title">{current?.label ?? 'Dashboard'}</h1>
+                <span className="wrap__eyebrow">{page === 'account' ? USER.name : ws.name}</span>
+                <h1 className="wrap__title">
+                  {page === 'account' ? 'Account settings' : current?.label ?? 'Dashboard'}
+                </h1>
               </span>
               <div className="wrap__actions">
                 <Tooltip renderTip="Notifications">

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Table } from '@instructure/ui'
+import { Table, Text, View } from '@instructure/ui'
 import { ISearch, ISliders, IPlus } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
@@ -167,13 +167,31 @@ export default function Pages({
   const ws = WORKSPACES[workspace]
   const label = ws.pages.find((p) => p.id === page)?.label ?? 'Dashboard'
 
+  /* Account settings is account-level, so it is not a page inside any one
+     service's rail. It was previously routed to whichever service happened to
+     have a Settings item, which meant it went dead in the two services that do
+     not have one — taking "Where you start" with it. */
+  if (page === 'account') {
+    return (
+      <Card
+        title="Preferences"
+        sub="These follow you across every school and service, so they are set once rather than per school."
+      >
+        <WhereYouStart config={config} prefs={prefs} onChange={onPrefs} />
+      </Card>
+    )
+  }
+
   /* Workspaces that are not tied to a school. The scope control still exists in
      the rail, it just has nothing to act on here, and the page says so. */
   if (!ws.scoped) {
     if (page === 'settings') {
       return (
-        <Card title="Settings" sub="Your preferences, including where you land when you sign in.">
-          <WhereYouStart config={config} prefs={prefs} onChange={onPrefs} />
+        <Card title="Settings" sub="Settings for your own Parchment account.">
+          <Text as="p" color="secondary">
+            Where you land when you sign in now lives in Account settings, reachable from your name
+            at the top of the rail, so it is the same control from every service.
+          </Text>
         </Card>
       )
     }
@@ -202,7 +220,16 @@ export default function Pages({
   if (page === 'settings') {
     return (
       <Card title={`${svc.name} settings`} sub={`These settings apply to ${where} only.`}>
-        <WhereYouStart config={config} prefs={prefs} onChange={onPrefs} />
+        <Text as="p" color="secondary">
+          Service settings for {svc.name} at {where} would appear here. They are scoped to this
+          school, so changing the school in the control above changes what you are editing.
+        </Text>
+        <View as="div" margin="medium 0 0 0">
+          <Text as="p" color="secondary" size="small">
+            Looking for where you land when you sign in? That is a personal preference, not a
+            setting for this school, so it lives in Account settings under your name.
+          </Text>
+        </View>
       </Card>
     )
   }
