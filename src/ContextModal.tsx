@@ -230,8 +230,10 @@ export default function ContextModal({
       <Modal.Footer>
         <div className="ctx__foot">
           <Checkbox
+            variant="toggle"
+            size="small"
             label="Start here next time"
-            checked={makeDefault}
+            checked={makeDefault || (isDefault && !changed)}
             disabled={isDefault && !changed}
             onChange={() => setMakeDefault((v) => !v)}
             messages={
