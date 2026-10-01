@@ -5,7 +5,7 @@ A working alternative to the current Parchment global-nav prototype, built with 
 Parchment control, which is the point: if the design system can't express the idea,
 the idea is wrong.
 
-**Live:** https://fanniharsanyi.github.io/parchment-instui-scope-prototype/
+**Live:** https://parchment-io.github.io/global-nav-scope-prototype/
 
 ## The argument in one line
 

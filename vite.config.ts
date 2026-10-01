@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/parchment-instui-scope-prototype/'
+  base: '/global-nav-scope-prototype/'
 })
