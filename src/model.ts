@@ -98,7 +98,7 @@ export type Config = {
   shape: 'both' | 'adminOnly' | 'learnerOnly'
   districtAdmin: boolean
   multiSchool: boolean
-  singleService: boolean
+  multiService: boolean
   hasCanvas: boolean
   hasMastery: boolean
   idVerification: boolean
@@ -108,7 +108,7 @@ export const DEFAULT_CONFIG: Config = {
   shape: 'both',
   districtAdmin: false,
   multiSchool: true,
-  singleService: false,
+  multiService: true,
   hasCanvas: false,
   hasMastery: false,
   idVerification: true
@@ -127,7 +127,7 @@ export function availableScopes(c: Config): ScopeId[] {
 export function servicesFor(scope: ScopeId | null, c: Config): ServiceId[] {
   if (!scope || !isAdmin(c)) return []
   const all = SCOPES[scope].services
-  return c.singleService ? all.slice(0, 1) : all
+  return c.multiService ? all : all.slice(0, 1)
 }
 
 export type PageId = string

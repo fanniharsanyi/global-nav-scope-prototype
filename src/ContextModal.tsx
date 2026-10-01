@@ -181,9 +181,11 @@ export default function ContextModal({
               Service
             </h3>
             <p className="ctx__sub">
-              {services.length > 0
-                ? `Offered at ${SCOPES[pickedScope].name}.`
-                : `${SCOPES[pickedScope].name} has no Parchment services yet.`}
+              {services.length === 0
+                ? `${SCOPES[pickedScope].name} has no Parchment services yet.`
+                : services.length === 1
+                  ? `This account is set up for one service only, so ${SCOPES[pickedScope].name} offers just the one.`
+                  : `${services.length} offered at ${SCOPES[pickedScope].name}.`}
             </p>
 
             <fieldset className="scopeset">

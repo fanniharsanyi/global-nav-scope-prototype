@@ -13,7 +13,7 @@ function outcome(c: Config): string {
   const first = scopes[0]
   const svc = servicesFor(first, c)
   if (c.districtAdmin) {
-    return `Signs in to District overview for ${SCOPES.district.name}. Scope starts at all 12 schools and can be narrowed to any one of them.`
+    return `Signs in to ${SCOPES.district.name} with ${svc.length} service${svc.length > 1 ? 's' : ''} in the rail. Scope starts at all 12 schools and can be narrowed to any one of them.`
   }
   if (scopes.length < 2) {
     return `Signs in to ${SCOPES[first].name}. One scope only, so the scope label is shown but is not a control.`
@@ -35,7 +35,7 @@ export default function SignIn({ onStart }: Props) {
   const toggles: Array<[keyof Config, string]> = [
     ['districtAdmin', 'District or master campus admin'],
     ['multiSchool', 'Admin supports multiple schools'],
-    ['singleService', 'Admin has one Parchment service only'],
+    ['multiService', 'Admin has more than one Parchment service'],
     ['hasMastery', 'Has Mastery account'],
     ['hasCanvas', 'Has Canvas account'],
     ['idVerification', 'Learner ID verification']
