@@ -1,5 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Table, Text, View } from '@instructure/ui'
+import {
+  Table, Text, View, Pill, Link, Metric as UiMetric, ToggleDetails, List, Flex,
+  Heading, ScreenReaderContent, IconWarningSolid, IconCheckMarkSolid, IconArrowOpenEndSolid
+} from '@instructure/ui'
 import { ISearch, ISliders, IPlus } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
@@ -204,39 +207,35 @@ function Foot({ label, onClick }: { label: string; onClick?: () => void }) {
 }
 
 function SchoolList({ r }: { r: ServiceRollup }) {
-  const [open, setOpen] = useState(false)
   const everywhere = r.schools.length === r.offered
   return (
-    <div className="svcc__cov">
-      <button
-        type="button"
-        className="svcc__cov-btn"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        <span aria-hidden="true" className={`svcc__chev${open ? ' svcc__chev--open' : ''}`}>
-          ›
-        </span>
-        {everywhere
-          ? `${r.offered} ${r.offered === 1 ? 'school' : 'schools'}`
-          : `${r.schools.length} of ${r.offered} schools`}
-      </button>
-      {open && (
-        <ul className="svcc__cov-list">
-          {r.schools.map((id) => (
-            <li key={id}>{SCOPES[id].name}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ToggleDetails
+      size="small"
+      summary={
+        <Text size="small" color="secondary">
+          {everywhere
+            ? `${r.offered} ${r.offered === 1 ? 'school' : 'schools'}`
+            : `${r.schools.length} of ${r.offered} schools`}
+        </Text>
+      }
+    >
+      <List isUnstyled margin="xx-small 0 0 0">
+        {r.schools.map((id) => (
+          <List.Item key={id}>
+            <Text size="small" color="secondary">
+              {SCOPES[id].name}
+            </Text>
+          </List.Item>
+        ))}
+      </List>
+    </ToggleDetails>
   )
 }
 
 /**
  * Exceptions first, and only exceptions. Ranked by how long the oldest item has
  * waited, because the counts belong to different services and are not
- * comparable to each other. Each row goes to the queue inside its service, not
- * to the service's front door -- the point is to land on the work.
+ * comparable to each other.
  */
 function AttentionBand({
   rows,
@@ -247,49 +246,69 @@ function AttentionBand({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="att att--clear">
-        <span className="att__clear-mark" aria-hidden="true">
-          ✓
-        </span>
-        <div>
-          <p className="att__clear-title">Nothing is waiting on you</p>
-          <p className="att__clear-sub">
+      <Flex alignItems="start" gap="small">
+        <Flex.Item>
+          <Text color="success">
+            <IconCheckMarkSolid />
+          </Text>
+        </Flex.Item>
+        <Flex.Item shouldShrink>
+          <span className="att__lede">
+            <Text as="p" weight="bold" lineHeight="condensed">
+              Nothing is waiting on you
+            </Text>
+          </span>
+          <Text as="p" size="small" color="secondary">
             Every service in this district is clear for the schools you have selected.
-          </p>
-        </div>
-      </div>
+          </Text>
+        </Flex.Item>
+      </Flex>
     )
   }
   return (
-    <ul className="att">
+    <List isUnstyled delimiter="solid" itemSpacing="small">
       {rows.map((r) => (
-        <li className="att__row" key={r.id}>
-          <span className="att__mark" aria-hidden="true" />
-          <div className="att__body">
-            <p className="att__phrase">{r.phrase}</p>
-            <p className="att__meta">
-              {r.name} · {r.schools.map((id) => SCOPES[id].name).join(', ')} · oldest has waited{' '}
-              {r.waitingDays} days
-            </p>
-          </div>
-          <button
-            type="button"
-            className="btn btn--secondary att__go"
-            onClick={() => onDrill('district', r.id)}
-          >
-            Open<span className="visually-hidden"> {r.name}</span>
-          </button>
-        </li>
+        <List.Item key={r.id}>
+          <Flex alignItems="start" gap="small">
+            <Flex.Item>
+              <span className="att__ico">
+                <Text color="warning">
+                  <IconWarningSolid />
+                </Text>
+              </span>
+            </Flex.Item>
+            <Flex.Item shouldGrow shouldShrink>
+              <span className="att__lede">
+                <Text as="p" weight="bold" lineHeight="condensed">
+                  {r.phrase}
+                </Text>
+              </span>
+              <Text as="p" size="small" color="secondary">
+                {r.name} · {r.schools.map((id) => SCOPES[id].name).join(', ')} · oldest has waited{' '}
+                {r.waitingDays} days
+              </Text>
+            </Flex.Item>
+            <Flex.Item align="start">
+              <Link
+                isWithinText={false}
+                onClick={() => onDrill('district', r.id)}
+                renderIcon={<IconArrowOpenEndSolid />}
+                iconPlacement="end"
+              >
+                Open<ScreenReaderContent> {r.name}</ScreenReaderContent>
+              </Link>
+            </Flex.Item>
+          </Flex>
+        </List.Item>
       ))}
-    </ul>
+    </List>
   )
 }
 
 /**
  * Every entitled service, so a district always sees its whole estate -- but
  * weighted, not enumerated. A service with work waiting is loud; a service with
- * nothing to do keeps its place and goes quiet. If both states looked the same
- * this would be the table again in a different shape.
+ * nothing to do keeps its place and goes quiet.
  */
 function ServiceCards({
   rows,
@@ -302,24 +321,40 @@ function ServiceCards({
     <ul className="svcc__grid">
       {rows.map((r) => (
         <li className={`svcc${r.attention ? ' svcc--due' : ''}`} key={r.id}>
-          <p className="svcc__status">
-            <span className="svcc__status-mark" aria-hidden="true" />
-            {r.attention ? 'Needs attention' : 'All clear'}
-          </p>
-          <h3 className="svcc__h">
-            <button type="button" className="svcc__title" onClick={() => onDrill('district', r.id)}>
+          <div className="svcc__pill">
+            <Pill
+              color={r.attention ? 'warning' : 'primary'}
+              renderIcon={r.attention ? <IconWarningSolid /> : undefined}
+            >
+              {r.attention ? 'Needs attention' : 'All clear'}
+            </Pill>
+          </div>
+          <Heading level="h4" as="h3">
+            <Link isWithinText={false} onClick={() => onDrill('district', r.id)}>
               {r.name}
-            </button>
-          </h3>
-          <p className="svcc__metric">
-            <strong>{r.value}</strong> {r.label}
-          </p>
+            </Link>
+          </Heading>
+          {r.attention ? (
+            <UiMetric
+              textAlign="start"
+              renderValue={<span className="svcc__big">{r.value}</span>}
+              renderLabel={<span className="svcc__lab">{r.label}</span>}
+            />
+          ) : (
+            <Text as="p" size="small" color="secondary">
+              <span className="att__lede">
+                <Text weight="bold">{r.value}</Text>
+              </span>{' '}
+              {r.label}
+            </Text>
+          )}
           <SchoolList r={r} />
         </li>
       ))}
     </ul>
   )
 }
+
 
 function Crest({ id }: { id: ScopeId }) {
   return (
@@ -571,6 +606,57 @@ function DistrictOverview({
   return (
     <div className="grid2">
       <div className="col-main">
+        <section className="ayd" aria-labelledby="ayd-greeting">
+          <p className="ayd__greeting" id="ayd-greeting">
+            <span className="ayd__spark" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ayd-grad)">
+                <path d="M10.2 4.8C13.1 10.5 13.1 10.5 18.8 13.4C13.1 16.3 13.1 16.3 10.2 22C7.3 16.3 7.3 16.3 1.6 13.4C7.3 10.5 7.3 10.5 10.2 4.8Z" />
+                <path d="M18.6 1.7C19.9 4.3 19.9 4.3 22.5 5.6C19.9 6.9 19.9 6.9 18.6 9.5C17.3 6.9 17.3 6.9 14.7 5.6C17.3 4.3 17.3 4.3 18.6 1.7Z" />
+              </svg>
+            </span>
+            <span className="ayd__greeting-text">Welcome back, Peter!</span>
+          </p>
+          <p className="ayd__sub">Ask anything about activity across your schools.</p>
+          <svg width="0" height="0" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="ayd-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#944fb3" />
+                <stop offset="100%" stopColor="#027887" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
+            <button
+              type="button"
+              className="ayd__plus"
+              aria-label="Add a file or a report for context"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+            <input
+              className="ayd__input"
+              id="ayd-prompt"
+              placeholder="Enter a prompt"
+              aria-label="Ask about activity across your schools"
+            />
+            <button type="submit" className="ayd__send" aria-label="Ask">
+              <span aria-hidden="true">↑</span>
+            </button>
+          </form>
+          <ul className="ayd__suggestions">
+            {[
+              'Which school has the most unfulfilled orders?',
+              'How is order volume split across the network?',
+              "Is anyone's access going unused?"
+            ].map((q) => (
+              <li key={q}>
+                <button type="button" className="ayd__suggestion">
+                  {q}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
         <div className="lc lc--dash">
           <div className="lc__group">
             <div className="lc__wrap">
@@ -627,57 +713,6 @@ function DistrictOverview({
           <ServiceCards rows={rollups} onDrill={onDrill} />
         </Panel>
 
-        <section className="ayd" aria-labelledby="ayd-greeting">
-          <p className="ayd__greeting" id="ayd-greeting">
-            <span className="ayd__spark" aria-hidden="true">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ayd-grad)">
-                <path d="M10.2 4.8C13.1 10.5 13.1 10.5 18.8 13.4C13.1 16.3 13.1 16.3 10.2 22C7.3 16.3 7.3 16.3 1.6 13.4C7.3 10.5 7.3 10.5 10.2 4.8Z" />
-                <path d="M18.6 1.7C19.9 4.3 19.9 4.3 22.5 5.6C19.9 6.9 19.9 6.9 18.6 9.5C17.3 6.9 17.3 6.9 14.7 5.6C17.3 4.3 17.3 4.3 18.6 1.7Z" />
-              </svg>
-            </span>
-            <span className="ayd__greeting-text">Welcome back, Peter!</span>
-          </p>
-          <p className="ayd__sub">Ask anything about activity across your schools.</p>
-          <svg width="0" height="0" aria-hidden="true" focusable="false">
-            <defs>
-              <linearGradient id="ayd-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#944fb3" />
-                <stop offset="100%" stopColor="#027887" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
-            <button
-              type="button"
-              className="ayd__plus"
-              aria-label="Add a file or a report for context"
-            >
-              <span aria-hidden="true">+</span>
-            </button>
-            <input
-              className="ayd__input"
-              id="ayd-prompt"
-              placeholder="Enter a prompt"
-              aria-label="Ask about activity across your schools"
-            />
-            <button type="submit" className="ayd__send" aria-label="Ask">
-              <span aria-hidden="true">↑</span>
-            </button>
-          </form>
-          <ul className="ayd__suggestions">
-            {[
-              'Which school has the most unfulfilled orders?',
-              'How is order volume split across the network?',
-              "Is anyone's access going unused?"
-            ].map((q) => (
-              <li key={q}>
-                <button type="button" className="ayd__suggestion">
-                  {q}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
 
         <Panel title="Order fulfillment" sub="Transcript Services · This month">
           <div className="osum__body">
