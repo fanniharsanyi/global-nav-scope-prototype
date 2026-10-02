@@ -1416,3 +1416,18 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .ayd--slim { flex-wrap: wrap; row-gap: var(--space-xs); padding: var(--space-sm) var(--space-md) 10px; }
 .ayd--slim .ayd__form { flex: 1 1 100%; min-width: 0; }
 .ayd--slim .ayd__suggestions { flex: 1 1 100%; flex-wrap: nowrap; overflow: visible; }
+
+/* ---- One service feed: quiet markers, per-school numbers inline ---- */
+.afeed__dot { display: block; width: 9px; height: 9px; margin-top: 7px; border-radius: 50%;
+  background: color-mix(in srgb, var(--text-mutedcolor) 45%, transparent); flex: none; }
+.afeed__dot--due { background: #cf4a00; }
+.afeed__schools { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 18px;
+  margin: 6px 0 0; padding: 0; }
+.afeed__schools li { display: inline-flex; align-items: center; gap: 7px; }
+.afeed__sdot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.afeed__snum { font-variant-numeric: tabular-nums; font-weight: var(--fontweight-body-strong);
+  font-size: var(--fontsize-textsm); color: var(--heading-basecolor); }
+
+/* give each service line room to breathe */
+.afeed__schools { margin-top: 7px; }
+.panel .afeed__dot { margin-top: 8px; }

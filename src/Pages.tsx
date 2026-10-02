@@ -310,6 +310,86 @@ function AttentionBand({
 }
 
 /**
+ * One list, not two. Every service the district runs, longest waiting first,
+ * each line carrying the schools that actually roll up to that service and
+ * what each of them is holding -- so the summary and the reporting are the
+ * same object instead of the same sentence said twice.
+ *
+ * Softened on purpose: urgency is carried by position and by the waiting time
+ * said in words, so the colour is a quiet marker rather than seven alarms.
+ */
+function ServiceFeed({
+  rows,
+  onDrill
+}: {
+  rows: ServiceRollup[]
+  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
+}) {
+  return (
+    <List isUnstyled delimiter="solid" itemSpacing="medium">
+      {rows.map((r) => {
+        const m = SERVICE_METRIC[r.id]
+        const bySchool = r.schools
+          .map((id) => ({ id, name: SCOPES[id].name, value: m.of(id) }))
+          .sort((a, b) => b.value - a.value)
+        return (
+          <List.Item key={r.id}>
+            <Flex alignItems="start" gap="small">
+              <Flex.Item>
+                <span
+                  className={`afeed__dot${r.attention ? ' afeed__dot--due' : ''}`}
+                  aria-hidden="true"
+                />
+              </Flex.Item>
+              <Flex.Item shouldGrow shouldShrink>
+                <div className="att__body">
+                  <span className="att__lede">
+                    <Text as="p" weight="bold" lineHeight="condensed">
+                      {r.phrase}
+                    </Text>
+                  </span>
+                  <Text as="p" size="small" color="secondary">
+                    {r.name} ·{' '}
+                    {r.attention
+                      ? `oldest has waited ${r.waitingDays} days`
+                      : 'nothing is waiting'}
+                  </Text>
+                  <ul className="afeed__schools">
+                    {bySchool.map((b) => (
+                      <li key={b.id}>
+                        <span
+                          className="afeed__sdot"
+                          aria-hidden="true"
+                          style={{ background: SCHOOL_COLOR[b.id] }}
+                        />
+                        <Text size="small" color="secondary">
+                          {b.name}
+                        </Text>{' '}
+                        <span className="afeed__snum">{b.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Flex.Item>
+              <Flex.Item align="start">
+                <Link
+                  isWithinText={false}
+                  onClick={() => onDrill('district', r.id)}
+                  renderIcon={<IconArrowOpenEndSolid />}
+                  iconPlacement="end"
+                >
+                  Open<ScreenReaderContent> {r.name}</ScreenReaderContent>
+                </Link>
+              </Flex.Item>
+            </Flex>
+          </List.Item>
+        )
+      })}
+    </List>
+  )
+}
+
+/**
  * Every entitled service, so a district always sees its whole estate -- but
  * weighted, not enumerated. A service with work waiting is loud; a service with
  * nothing to do keeps its place and goes quiet.
@@ -355,108 +435,6 @@ function ServiceCards({
           <SchoolList r={r} />
         </li>
       ))}
-    </ul>
-  )
-}
-
-
-/**
- * The manager's brief, taken literally: a summary of every service this
- * district runs, each one reporting the schools that actually roll up to it --
- * because that set differs per service and there is nowhere else to see it --
- * and each one drilling into the service itself.
- */
-function ServiceSummaries({
-  rows,
-  onDrill
-}: {
-  rows: ServiceRollup[]
-  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
-}) {
-  return (
-    <ul className="svcs">
-      {rows.map((r) => {
-        const m = SERVICE_METRIC[r.id]
-        const bySchool = r.schools
-          .map((s) => ({ id: s, name: SCOPES[s].name, value: m.of(s) }))
-          .sort((a, b) => b.value - a.value)
-        const top = Math.max(...bySchool.map((b) => b.value), 1)
-        return (
-          <li className={`svcs__item${r.attention ? ' svcs__item--due' : ''}`} key={r.id}>
-            <div className="svcs__head">
-              <Heading level="h4" as="h3">
-                <Link isWithinText={false} onClick={() => onDrill('district', r.id)}>
-                  {r.name}
-                </Link>
-              </Heading>
-              <Pill
-                color={r.attention ? 'warning' : 'primary'}
-                renderIcon={r.attention ? <IconWarningSolid /> : undefined}
-              >
-                {r.attention ? 'Needs attention' : 'All clear'}
-              </Pill>
-            </div>
-
-            <div className="att__body svcs__lede">
-              <span className="att__lede">
-                <Text as="p" weight="bold" lineHeight="condensed">
-                  {r.value} {r.label}
-                </Text>
-              </span>
-              <Text as="p" size="small" color="secondary">
-                {r.schools.length === r.offered
-                  ? `Across ${r.schools.length} ${r.schools.length === 1 ? 'school' : 'schools'}`
-                  : `Across ${r.schools.length} of ${r.offered} schools`}
-                {r.attention ? ` \u00b7 oldest has waited ${r.waitingDays} days` : ''}
-              </Text>
-            </div>
-
-            <Table caption={<ScreenReaderContent>{r.name} by school</ScreenReaderContent>} layout="auto">
-              <Table.Head>
-                <Table.Row>
-                  <Table.ColHeader id={`${r.id}-sch`}>School</Table.ColHeader>
-                  <Table.ColHeader id={`${r.id}-val`} textAlign="end">
-                    {r.label[0].toUpperCase() + r.label.slice(1)}
-                  </Table.ColHeader>
-                </Table.Row>
-              </Table.Head>
-              <Table.Body>
-                {bySchool.map((b) => (
-                  <Table.Row key={b.id}>
-                    <Table.Cell header scope="row">
-                      <span className="svcs__sch">
-                        <span
-                          className="svcs__dot"
-                          aria-hidden="true"
-                          style={{ background: SCHOOL_COLOR[b.id] }}
-                        />
-                        {b.name}
-                      </span>
-                    </Table.Cell>
-                    <Table.Cell textAlign="end">
-                      <span className="svcs__bar" aria-hidden="true">
-                        <span style={{ width: `${Math.round((b.value / top) * 100)}%` }} />
-                      </span>
-                      <span className="svcs__num">{b.value}</span>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-
-            <div className="svcs__foot">
-              <Link
-                isWithinText={false}
-                onClick={() => onDrill('district', r.id)}
-                renderIcon={<IconArrowOpenEndSolid />}
-                iconPlacement="end"
-              >
-                Open {r.name}
-              </Link>
-            </div>
-          </li>
-        )
-      })}
     </ul>
   )
 }
@@ -752,17 +730,6 @@ function DistrictOverview({
             <div className="visually-hidden" role="status" data-dist-live>
               {note}
             </div>
-            <Panel
-              title="Needs your attention"
-              sub={
-                attention.length > 0
-                  ? `Longest waiting first, across ${rollups.length} services. Every service is listed below.`
-                  : 'Across every service this district runs'
-              }
-            >
-              <AttentionBand rows={attention} onDrill={onDrill} />
-            </Panel>
-    
             <section className="ayd ayd--slim" aria-labelledby="ayd-slim-h">
               <h2 className="visually-hidden" id="ayd-slim-h">Ask about this district</h2>
               <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
@@ -781,12 +748,14 @@ function DistrictOverview({
                 ))}
               </ul>
             </section>
+
             <Panel
-              title="Your services"
-              sub={`${rollups.length} services · each one covers its own set of schools`}
+              title="Needs your attention"
+              sub={`All ${rollups.length} services this district runs, longest waiting first`}
             >
-              <ServiceSummaries rows={rollups} onDrill={onDrill} />
+              <ServiceFeed rows={rollups} onDrill={onDrill} />
             </Panel>
+    
     </>
         ) : (
     <>
