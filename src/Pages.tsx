@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import {
-  Table, Text, View, Link, List, Flex,
+  Table, Text, View, Link, ToggleDetails,
   ScreenReaderContent, IconArrowOpenEndSolid
 } from '@instructure/ui'
 import { ISearch, ISliders, IPlus } from './Icons'
@@ -205,86 +205,118 @@ function Foot({ label, onClick }: { label: string; onClick?: () => void }) {
     </div>
   )
 }
+/** The table column is narrow, so schools get their everyday short name. */
+const SHORT_SCHOOL: Record<string, string> = {
+  bambusa: 'Bambusa',
+  panda: 'Panda',
+  meridian: 'Meridian'
+}
 
 /**
- * One list, not two. Every service the district runs, longest waiting first,
- * each line carrying the schools that actually roll up to that service and
- * what each of them is holding -- so the summary and the reporting are the
- * same object instead of the same sentence said twice.
+ * One row per service, sorted by the only number that means the same thing
+ * everywhere: how long the oldest item has waited. Counts are not comparable
+ * across services -- 285 badges issued is a bigger number than 280 diplomas
+ * stuck -- so magnitude never drives sort order or size.
  *
- * Softened on purpose: urgency is carried by position and by the waiting time
- * said in words, so the colour is a quiet marker rather than seven alarms.
+ * NN/g: "color should not be used to communicate information about
+ * quantitative values or magnitude." Urgency is a status word plus hue;
+ * quantity is a right-aligned tabular numeral in a fixed column. Separate
+ * channels, so the eye can find either one without reading the other.
  */
-function ServiceFeed({
+function ServiceTable({
   rows,
+  quiet,
   onDrill
 }: {
   rows: ServiceRollup[]
+  quiet?: boolean
   onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
 }) {
   return (
-    <List isUnstyled delimiter="solid" itemSpacing="medium">
-      {rows.map((r) => {
-        const m = SERVICE_METRIC[r.id]
-        const bySchool = r.schools
-          .map((id) => ({ id, name: SCOPES[id].name, value: m.of(id) }))
-          .sort((a, b) => b.value - a.value)
-        return (
-          <List.Item key={r.id}>
-            <Flex alignItems="start" gap="small">
-              <Flex.Item>
-                <span
-                  className={`afeed__dot${r.attention ? ' afeed__dot--due' : ''}`}
-                  aria-hidden="true"
-                />
-              </Flex.Item>
-              <Flex.Item shouldGrow shouldShrink>
-                <div className="att__body">
-                  <span className="att__lede">
-                    <Text as="p" weight="bold" lineHeight="condensed">
-                      {r.phrase}
-                    </Text>
+    <Table
+      caption={
+        quiet
+          ? 'Services with nothing waiting'
+          : 'Services needing attention, longest wait first'
+      }
+      layout="fixed"
+    >
+      <Table.Head>
+        <Table.Row>
+          <Table.ColHeader id="svc-name" width="26%">
+            Service
+          </Table.ColHeader>
+          <Table.ColHeader id="svc-wait" width="15%" textAlign="end">
+            Oldest wait
+          </Table.ColHeader>
+          <Table.ColHeader id="svc-vol" width="22%">
+            Waiting now
+          </Table.ColHeader>
+          <Table.ColHeader id="svc-sch" width="26%">
+            Schools
+          </Table.ColHeader>
+          <Table.ColHeader id="svc-go" width="13%" textAlign="end">
+            <ScreenReaderContent>Open service</ScreenReaderContent>
+          </Table.ColHeader>
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {rows.map((r) => {
+          const m = SERVICE_METRIC[r.id]
+          const schools = r.schools
+            .map((id) => ({ id, name: SCOPES[id].name, value: m.of(id) }))
+            .sort((a, b) => b.value - a.value)
+          return (
+            <Table.Row key={r.id}>
+              <Table.RowHeader>
+                <span className="st__name">{r.name}</span>
+              </Table.RowHeader>
+              <Table.Cell textAlign="end">
+                {quiet ? (
+                  <span className="st__none">&mdash;</span>
+                ) : (
+                  <span className={`st__age${r.waitingDays >= 7 ? ' st__age--hot' : ''}`}>
+                    <b>{r.waitingDays}</b>
+                    <span className="st__unit">days</span>
                   </span>
-                  <Text as="p" size="small" color="secondary">
-                    {r.name} ·{' '}
-                    {r.attention
-                      ? `oldest has waited ${r.waitingDays} days`
-                      : 'nothing is waiting'}
-                  </Text>
-                  <ul className="afeed__schools">
-                    {bySchool.map((b) => (
-                      <li key={b.id}>
-                        <span
-                          className="afeed__sdot"
-                          aria-hidden="true"
-                          style={{ background: SCHOOL_COLOR[b.id] }}
-                        />
-                        <Text size="small" color="secondary">
-                          {b.name}
-                        </Text>{' '}
-                        <span className="afeed__snum">{b.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Flex.Item>
-              <Flex.Item align="start">
-                <Link
-                  isWithinText={false}
-                  onClick={() => onDrill('district', r.id)}
-                  renderIcon={<IconArrowOpenEndSolid />}
-                  iconPlacement="end"
-                >
-                  Open<ScreenReaderContent> {r.name}</ScreenReaderContent>
-                </Link>
-              </Flex.Item>
-            </Flex>
-          </List.Item>
-        )
-      })}
-    </List>
+                )}
+              </Table.Cell>
+              <Table.Cell>
+                <span className="st__vol">
+                  <b>{r.value.toLocaleString()}</b> {r.label}
+                </span>
+              </Table.Cell>
+              <Table.Cell>
+                <span className="st__schools">
+                  {schools.map((b) => (
+                    <span className="st__chip" key={b.id}>
+                      <i style={{ background: SCHOOL_COLOR[b.id] }} aria-hidden="true" />
+                      {SHORT_SCHOOL[b.id] ?? b.name}
+                      <b>{b.value}</b>
+                    </span>
+                  ))}
+                </span>
+              </Table.Cell>
+              <Table.Cell textAlign="end">
+                <span className="st__go">
+                  <Link
+                    isWithinText={false}
+                    onClick={() => onDrill('district', r.id)}
+                    renderIcon={<IconArrowOpenEndSolid />}
+                    iconPlacement="end"
+                  >
+                    Open<ScreenReaderContent> {r.name}</ScreenReaderContent>
+                  </Link>
+                </span>
+              </Table.Cell>
+            </Table.Row>
+          )
+        })}
+      </Table.Body>
+    </Table>
   )
 }
+
 
 
 function Crest({ id }: { id: ScopeId }) {
@@ -532,6 +564,13 @@ function DistrictOverview({
   const receiveSchools = inView('receive')
   const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
   const rollups = useMemo(() => serviceRollups(svcs, picked), [svcs, picked])
+  // Age is the only figure that means the same thing in every service, so it
+  // is the sort key. Counts stay in their own column and never drive order.
+  const due = useMemo(
+    () => rollups.filter((r) => r.attention).sort((x, y) => y.waitingDays - x.waitingDays),
+    [rollups]
+  )
+  const calm = useMemo(() => rollups.filter((r) => !r.attention), [rollups])
   const dense = new URLSearchParams(window.location.search).has('dense')
 
   return (
@@ -596,10 +635,22 @@ function DistrictOverview({
             </section>
 
             <Panel
-              title="Needs your attention"
-              sub={`All ${rollups.length} services this district runs, longest waiting first`}
+              title="Where things stand"
+              sub={`${due.length} of ${rollups.length} services need you · longest wait first`}
             >
-              <ServiceFeed rows={rollups} onDrill={onDrill} />
+              <ServiceTable rows={due} onDrill={onDrill} />
+              {calm.length > 0 && (
+                <div className="st__calm">
+                  <ToggleDetails
+                    summary={`${calm.length} services have nothing waiting: ${calm
+                      .map((r) => r.name)
+                      .join(', ')}`}
+                    fluidWidth
+                  >
+                    <ServiceTable rows={calm} quiet onDrill={onDrill} />
+                  </ToggleDetails>
+                </div>
+              )}
             </Panel>
     
     </>
@@ -694,14 +745,22 @@ function DistrictOverview({
               {note}
             </div>
             <Panel
-              title="Needs your attention"
-              sub={
-                rollups.length > 0
-                  ? `All ${rollups.length} services this district runs, longest waiting first`
-                  : 'Across every service this district runs'
-              }
+              title="Where things stand"
+              sub={`${due.length} of ${rollups.length} services need you · longest wait first`}
             >
-              <ServiceFeed rows={rollups} onDrill={onDrill} />
+              <ServiceTable rows={due} onDrill={onDrill} />
+              {calm.length > 0 && (
+                <div className="st__calm">
+                  <ToggleDetails
+                    summary={`${calm.length} services have nothing waiting: ${calm
+                      .map((r) => r.name)
+                      .join(', ')}`}
+                    fluidWidth
+                  >
+                    <ServiceTable rows={calm} quiet onDrill={onDrill} />
+                  </ToggleDetails>
+                </div>
+              )}
             </Panel>
             <Panel title="Order fulfillment" sub="Transcript Services · This month">
               <div className="osum__body">

@@ -1431,3 +1431,32 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 /* give each service line room to breathe */
 .afeed__schools { margin-top: 7px; }
 .panel .afeed__dot { margin-top: 8px; }
+
+/* ---- Service status table: one scannable column per question ---- */
+.st__name { font-weight: var(--fontweight-body-strong); color: var(--heading-basecolor); }
+.st__age { display: inline-flex; align-items: baseline; gap: 5px; }
+.st__age b { font-size: 22px; font-weight: var(--fontweight-heading-strong);
+  font-variant-numeric: tabular-nums; line-height: 1; color: #cf4a00; }
+.st__unit { font-size: var(--fontsize-textsm); color: var(--text-mutedcolor); }
+.st__none { color: var(--text-mutedcolor); }
+.st__vol { font-size: var(--fontsize-textsm); color: var(--text-mutedcolor); }
+.st__vol b { font-variant-numeric: tabular-nums; font-size: var(--fontsize-textbase);
+  color: var(--heading-basecolor); }
+.st__schools { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.st__chip { display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--fontsize-textsm); color: var(--text-mutedcolor); }
+.st__chip i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.st__chip b { font-variant-numeric: tabular-nums; color: var(--heading-basecolor); }
+.st__calm { margin-top: var(--space-md); padding-top: var(--space-sm);
+  border-top: 1px solid var(--nav-border-color); }
+.st__calm .st__vol b, .st__calm .st__name { font-weight: var(--fontweight-body-base); }
+
+/* a week is the point where the number should start shouting */
+.st__age b { color: var(--heading-basecolor); }
+.st__age--hot b { color: #cf4a00; }
+.st__go { white-space: nowrap; }
+
+/* The quiet table repeats the same columns, so its header is muted rather
+   than hidden -- hiding it collapses the fixed widths and breaks alignment. */
+.st__calm [class*='-table'] th[scope='col'] { color: var(--text-mutedcolor);
+  font-weight: var(--fontweight-body-base); font-size: var(--fontsize-textsm); }
