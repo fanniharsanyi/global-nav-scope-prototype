@@ -1362,3 +1362,19 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .svcc [class*='-metric__label'],
 .att__lede,
 .att__lede [data-cid='Text'] { color: var(--heading-basecolor); }
+
+/* ---- Dense preview: the AI card as an entry point, not a hero ---- */
+.ayd--slim {
+  background: var(--background-containercolor);
+  border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-card-lg);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.ayd--slim .ayd__form { margin: 0; flex: 1 1 320px; min-width: 260px; }
+.ayd--slim .ayd__suggestions { margin: 0; justify-content: flex-start; flex: 1 1 auto; }
+.ayd--slim .ayd__suggestion { font-size: var(--fontsize-textsm); }

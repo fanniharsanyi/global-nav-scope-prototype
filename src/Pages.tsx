@@ -606,249 +606,357 @@ function DistrictOverview({
   const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
   const rollups = useMemo(() => serviceRollups(svcs, picked), [svcs, picked])
   const attention = useMemo(() => districtAttention(svcs, picked, 3), [svcs, picked])
+  const dense = new URLSearchParams(window.location.search).has('dense')
 
   return (
     <div className="grid2">
       <div className="col-main">
-        <section className="ayd" aria-labelledby="ayd-greeting">
-          <p className="ayd__greeting" id="ayd-greeting">
-            <span className="ayd__spark" aria-hidden="true">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ayd-grad)">
-                <path d="M10.2 4.8C13.1 10.5 13.1 10.5 18.8 13.4C13.1 16.3 13.1 16.3 10.2 22C7.3 16.3 7.3 16.3 1.6 13.4C7.3 10.5 7.3 10.5 10.2 4.8Z" />
-                <path d="M18.6 1.7C19.9 4.3 19.9 4.3 22.5 5.6C19.9 6.9 19.9 6.9 18.6 9.5C17.3 6.9 17.3 6.9 14.7 5.6C17.3 4.3 17.3 4.3 18.6 1.7Z" />
-              </svg>
-            </span>
-            <span className="ayd__greeting-text">Welcome back, Peter!</span>
-          </p>
-          <p className="ayd__sub">Ask anything about activity across your schools.</p>
-          <svg width="0" height="0" aria-hidden="true" focusable="false">
-            <defs>
-              <linearGradient id="ayd-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#944fb3" />
-                <stop offset="100%" stopColor="#027887" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
-            <button
-              type="button"
-              className="ayd__plus"
-              aria-label="Add a file or a report for context"
+        {dense ? (
+    <>
+            <div className="lc lc--dash">
+              <div className="lc__group">
+                <div className="lc__wrap">
+                  <button
+                    type="button"
+                    className="lc__btn"
+                    aria-expanded={openFilter}
+                    onClick={() => setOpenFilter(!openFilter)}
+                  >
+                    <span className="lc__btn-label">Schools</span>
+                    <span className="lc__btn-summary">
+                      {all ? 'All' : `${picked.length} of ${SCHOOL_IDS.length}`}
+                    </span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  {openFilter && (
+                    <fieldset className="schfilter">
+                      <legend className="visually-hidden">Which schools to include</legend>
+                      {SCHOOL_IDS.map((id) => (
+                        <label key={id} className="schfilter__chip">
+                          <input
+                            type="checkbox"
+                            checked={picked.includes(id)}
+                            onChange={() => toggle(id)}
+                          />
+                          <span>{SCOPES[id].name}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                </div>
+              </div>
+              <p className="lc__count">Filters every panel on this page</p>
+            </div>
+            <div className="visually-hidden" role="status" data-dist-live>
+              {note}
+            </div>
+            <Panel
+              title="Needs your attention"
+              sub={
+                attention.length > 0
+                  ? `Longest waiting first, across ${rollups.length} services. Every service is listed below.`
+                  : 'Across every service this district runs'
+              }
             >
-              <span aria-hidden="true">+</span>
-            </button>
-            <input
-              className="ayd__input"
-              id="ayd-prompt"
-              placeholder="Enter a prompt"
-              aria-label="Ask about activity across your schools"
-            />
-            <button type="submit" className="ayd__send" aria-label="Ask">
-              <span aria-hidden="true">↑</span>
-            </button>
-          </form>
-          <ul className="ayd__suggestions">
-            {[
-              'Which school has the most unfulfilled orders?',
-              'How is order volume split across the network?',
-              "Is anyone's access going unused?"
-            ].map((q) => (
-              <li key={q}>
-                <button type="button" className="ayd__suggestion">
-                  {q}
+              <AttentionBand rows={attention} onDrill={onDrill} />
+            </Panel>
+    
+            <section className="ayd ayd--slim" aria-labelledby="ayd-slim-h">
+              <h2 className="visually-hidden" id="ayd-slim-h">Ask about this district</h2>
+              <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
+                <button type="button" className="ayd__plus" aria-label="Add a file or a report for context">
+                  <span aria-hidden="true">+</span>
                 </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <div className="lc lc--dash">
-          <div className="lc__group">
-            <div className="lc__wrap">
-              <button
-                type="button"
-                className="lc__btn"
-                aria-expanded={openFilter}
-                onClick={() => setOpenFilter(!openFilter)}
-              >
-                <span className="lc__btn-label">Schools</span>
-                <span className="lc__btn-summary">
-                  {all ? 'All' : `${picked.length} of ${SCHOOL_IDS.length}`}
-                </span>
-                <span aria-hidden="true">▾</span>
-              </button>
-              {openFilter && (
-                <fieldset className="schfilter">
-                  <legend className="visually-hidden">Which schools to include</legend>
-                  {SCHOOL_IDS.map((id) => (
-                    <label key={id} className="schfilter__chip">
-                      <input
-                        type="checkbox"
-                        checked={picked.includes(id)}
-                        onChange={() => toggle(id)}
-                      />
-                      <span>{SCOPES[id].name}</span>
-                    </label>
-                  ))}
-                </fieldset>
-              )}
-            </div>
-          </div>
-          <p className="lc__count">Filters every panel on this page</p>
-        </div>
-        <div className="visually-hidden" role="status" data-dist-live>
-          {note}
-        </div>
-
-        <Panel
-          title="Needs your attention"
-          sub={
-            attention.length > 0
-              ? `Longest waiting first, across ${rollups.length} services. Every service is listed below.`
-              : 'Across every service this district runs'
-          }
-        >
-          <AttentionBand rows={attention} onDrill={onDrill} />
-        </Panel>
-
-        <Panel
-          title="Your services"
-          sub={`${rollups.length} services · each one covers its own set of schools`}
-        >
-          <ServiceCards rows={rollups} onDrill={onDrill} />
-        </Panel>
-
-
-        <Panel title="Order fulfillment" sub="Transcript Services · This month">
-          <div className="osum__body">
-            <div className="osum__chart">
-              <Donut slices={orderRows} total={orderTotal} />
-              <p className="osum__chart-note">
-                Orders this month, across the selected schools
-              </p>
-            </div>
-            <table className="osum__table">
-              <caption className="osum__caption">Transcript Services orders by school</caption>
-              <thead>
-                <tr>
-                  <th scope="col">School</th>
-                  <th scope="col" className="osum__num">
-                    Orders
-                  </th>
-                  <th scope="col" className="osum__num">
-                    Share
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderRows.map((r) => (
-                  <tr key={r.id}>
-                    <th scope="row" className="osum__school">
-                      <span
-                        className="osum__swatch"
-                        aria-hidden="true"
-                        style={{ background: SCHOOL_COLOR[r.id] }}
-                      />
-                      {SCOPES[r.id].name}
-                    </th>
-                    <td className="osum__num">{r.value.toLocaleString()}</td>
-                    <td className="osum__num osum__share">
-                      {`${Math.round((r.value / Math.max(1, orderTotal)) * 100)}%`}
-                    </td>
-                  </tr>
+                <input className="ayd__input" id="ayd-prompt" placeholder="Ask about activity across your schools"
+                  aria-label="Ask about activity across your schools" />
+                <button type="submit" className="ayd__send" aria-label="Ask"><span aria-hidden="true">↑</span></button>
+              </form>
+              <ul className="ayd__suggestions">
+                {['Which school has the most unfulfilled orders?',
+                  'How is order volume split across the network?',
+                  "Is anyone's access going unused?"].map((q) => (
+                  <li key={q}><button type="button" className="ayd__suggestion">{q}</button></li>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <th scope="row">Total</th>
-                  <td className="osum__num">{orderTotal.toLocaleString()}</td>
-                  <td className="osum__num osum__share">100%</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <p className="osum__ai">
-            <span className="osum__ai-spark" aria-hidden="true">
-              ✦
-            </span>
-            This summary is powered by IgniteAI and reflects the latest activity.
-          </p>
-          <div className="osum__foot">
-            <span className="osum__foot-meta">Updated 2h ago</span>
-            <button
-              className="osum__foot-link"
-              type="button"
-              onClick={() => onDrill('district', 'transcript')}
+              </ul>
+            </section>
+            <Panel
+              title="Your services"
+              sub={`${rollups.length} services · each one covers its own set of schools`}
             >
-              View Details <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        </Panel>
-
-        <Panel title="Open orders" sub="Transcript Services · Awaiting fulfillment">
-          <BarTable
-            caption={`${openTotal} open orders across ${openRows.length} ${openRows.length === 1 ? 'school' : 'schools'}, most outstanding first.`}
-            valueLabel="Open orders"
-            rows={openRows}
-          />
-          <Foot label="View all orders" onClick={() => onDrill('district', 'transcript')} />
-        </Panel>
-
-        {diplomaRows.length > 0 && (
-          <Panel title="Issue events" sub="Diploma Services · Queued and in progress">
-            <BarTable
-              caption={`${diplomaTotal} diplomas ready to issue across ${diplomaRows.length} ${diplomaRows.length === 1 ? 'school' : 'schools'}.`}
-              valueLabel="Ready to issue"
-              extraCols={['Scheduled', 'In progress']}
-              rows={diplomaRows}
-            />
-            <Foot label="View issue events" onClick={() => onDrill('district', 'diploma')} />
-          </Panel>
-        )}
-
-        {dualRows.length > 0 && (
-          <Panel title="New applications" sub="Dual Enrollment · Awaiting review">
-            <BarTable
-              caption={`${dualTotal} applications awaiting review across ${dualRows.length} ${dualRows.length === 1 ? 'school' : 'schools'}.`}
-              valueLabel="New applications"
-              rows={dualRows}
-            />
-            <Foot label="Review applications" onClick={() => onDrill('district', 'dualEnrollment')} />
-          </Panel>
-        )}
-
-        {receiveSchools.length > 0 && (
-          <Panel
-            title="Waiting to download"
-            sub={`Receive · ${receiveSchools.length} ${receiveSchools.length === 1 ? 'school' : 'schools'}`}
-          >
-            <div className="srol__trend">
-              <Spark data={RECEIVE_TREND} />
-              <p className="srol__trend-note">
-                Documents received per day, last 14 days. Between{' '}
-                {Math.min(...RECEIVE_TREND)} and {Math.max(...RECEIVE_TREND)} a day, ending on{' '}
-                {RECEIVE_TREND[RECEIVE_TREND.length - 1]}. The two dips are weekends.
+              <ServiceCards rows={rollups} onDrill={onDrill} />
+            </Panel>
+            <Panel title="Reports" sub="Cross-service reporting, covering every service this district runs">
+              <List isUnstyled delimiter="solid" itemSpacing="small">
+                {[['Order fulfilment and open orders', 'Transcript Services', 'transcript'],
+                  ['Issue events', 'Diploma Services', 'diploma'],
+                  ['New applications', 'Dual Enrollment', 'dualEnrollment'],
+                  ['Waiting to download', 'Receive', 'receive'],
+              ['Documents in transit', 'Send', 'send'],
+              ['Badges issued', 'Badges & Certificates', 'badges'],
+              ['Verification turnaround', 'Credential Verification', 'verify']].map(([t, s, id]) => (
+                  <List.Item key={t}>
+                    <Flex alignItems="center" gap="small">
+                      <Flex.Item shouldGrow shouldShrink>
+                        <div className="att__body">
+                          <span className="att__lede">
+                            <Text as="p" weight="bold" lineHeight="condensed">{t}</Text>
+                          </span>
+                          <Text as="p" size="small" color="secondary">{s}</Text>
+                        </div>
+                      </Flex.Item>
+                      <Flex.Item>
+                        <Link isWithinText={false} onClick={() => onDrill('district', id as WorkspaceId)}
+                          renderIcon={<IconArrowOpenEndSolid />} iconPlacement="end">
+                          Open<ScreenReaderContent> {t}</ScreenReaderContent>
+                        </Link>
+                      </Flex.Item>
+                    </Flex>
+                  </List.Item>
+                ))}
+              </List>
+              <Foot label="All reports" onClick={() => onDrill('district', 'transcript')} />
+            </Panel>
+    </>
+        ) : (
+    <>
+            <section className="ayd" aria-labelledby="ayd-greeting">
+              <p className="ayd__greeting" id="ayd-greeting">
+                <span className="ayd__spark" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ayd-grad)">
+                    <path d="M10.2 4.8C13.1 10.5 13.1 10.5 18.8 13.4C13.1 16.3 13.1 16.3 10.2 22C7.3 16.3 7.3 16.3 1.6 13.4C7.3 10.5 7.3 10.5 10.2 4.8Z" />
+                    <path d="M18.6 1.7C19.9 4.3 19.9 4.3 22.5 5.6C19.9 6.9 19.9 6.9 18.6 9.5C17.3 6.9 17.3 6.9 14.7 5.6C17.3 4.3 17.3 4.3 18.6 1.7Z" />
+                  </svg>
+                </span>
+                <span className="ayd__greeting-text">Welcome back, Peter!</span>
               </p>
+              <p className="ayd__sub">Ask anything about activity across your schools.</p>
+              <svg width="0" height="0" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="ayd-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#944fb3" />
+                    <stop offset="100%" stopColor="#027887" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
+                <button
+                  type="button"
+                  className="ayd__plus"
+                  aria-label="Add a file or a report for context"
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+                <input
+                  className="ayd__input"
+                  id="ayd-prompt"
+                  placeholder="Enter a prompt"
+                  aria-label="Ask about activity across your schools"
+                />
+                <button type="submit" className="ayd__send" aria-label="Ask">
+                  <span aria-hidden="true">↑</span>
+                </button>
+              </form>
+              <ul className="ayd__suggestions">
+                {[
+                  'Which school has the most unfulfilled orders?',
+                  'How is order volume split across the network?',
+                  "Is anyone's access going unused?"
+                ].map((q) => (
+                  <li key={q}>
+                    <button type="button" className="ayd__suggestion">
+                      {q}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <div className="lc lc--dash">
+              <div className="lc__group">
+                <div className="lc__wrap">
+                  <button
+                    type="button"
+                    className="lc__btn"
+                    aria-expanded={openFilter}
+                    onClick={() => setOpenFilter(!openFilter)}
+                  >
+                    <span className="lc__btn-label">Schools</span>
+                    <span className="lc__btn-summary">
+                      {all ? 'All' : `${picked.length} of ${SCHOOL_IDS.length}`}
+                    </span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                  {openFilter && (
+                    <fieldset className="schfilter">
+                      <legend className="visually-hidden">Which schools to include</legend>
+                      {SCHOOL_IDS.map((id) => (
+                        <label key={id} className="schfilter__chip">
+                          <input
+                            type="checkbox"
+                            checked={picked.includes(id)}
+                            onChange={() => toggle(id)}
+                          />
+                          <span>{SCOPES[id].name}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                </div>
+              </div>
+              <p className="lc__count">Filters every panel on this page</p>
             </div>
-            <div className="srol__stats">
-              <div className="srol__stat">
-                <span className="srol__stat-value">{RECEIVE_FACTS.toDownload}</span>
-                <span className="srol__stat-label">Documents to download</span>
-                <span className="srol__stat-hint">Received but not yet viewed or downloaded.</span>
-                <button type="button" className="btn btn--secondary">
-                  View documents
+            <div className="visually-hidden" role="status" data-dist-live>
+              {note}
+            </div>
+            <Panel
+              title="Needs your attention"
+              sub={
+                attention.length > 0
+                  ? `Longest waiting first, across ${rollups.length} services. Every service is listed below.`
+                  : 'Across every service this district runs'
+              }
+            >
+              <AttentionBand rows={attention} onDrill={onDrill} />
+            </Panel>
+    
+            <Panel
+              title="Your services"
+              sub={`${rollups.length} services · each one covers its own set of schools`}
+            >
+              <ServiceCards rows={rollups} onDrill={onDrill} />
+            </Panel>
+            <Panel title="Order fulfillment" sub="Transcript Services · This month">
+              <div className="osum__body">
+                <div className="osum__chart">
+                  <Donut slices={orderRows} total={orderTotal} />
+                  <p className="osum__chart-note">
+                    Orders this month, across the selected schools
+                  </p>
+                </div>
+                <table className="osum__table">
+                  <caption className="osum__caption">Transcript Services orders by school</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">School</th>
+                      <th scope="col" className="osum__num">
+                        Orders
+                      </th>
+                      <th scope="col" className="osum__num">
+                        Share
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderRows.map((r) => (
+                      <tr key={r.id}>
+                        <th scope="row" className="osum__school">
+                          <span
+                            className="osum__swatch"
+                            aria-hidden="true"
+                            style={{ background: SCHOOL_COLOR[r.id] }}
+                          />
+                          {SCOPES[r.id].name}
+                        </th>
+                        <td className="osum__num">{r.value.toLocaleString()}</td>
+                        <td className="osum__num osum__share">
+                          {`${Math.round((r.value / Math.max(1, orderTotal)) * 100)}%`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th scope="row">Total</th>
+                      <td className="osum__num">{orderTotal.toLocaleString()}</td>
+                      <td className="osum__num osum__share">100%</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <p className="osum__ai">
+                <span className="osum__ai-spark" aria-hidden="true">
+                  ✦
+                </span>
+                This summary is powered by IgniteAI and reflects the latest activity.
+              </p>
+              <div className="osum__foot">
+                <span className="osum__foot-meta">Updated 2h ago</span>
+                <button
+                  className="osum__foot-link"
+                  type="button"
+                  onClick={() => onDrill('district', 'transcript')}
+                >
+                  View Details <span aria-hidden="true">→</span>
                 </button>
               </div>
-              <div className="srol__stat">
-                <span className="srol__stat-value">{RECEIVE_FACTS.pendingZips}</span>
-                <span className="srol__stat-label">Pending ZIP downloads</span>
-                <span className="srol__stat-hint">Batched automatically by a workflow.</span>
-                <button type="button" className="btn btn--secondary">
-                  Download all
-                </button>
-              </div>
-            </div>
-            <Foot label="View Parchment Cloud" onClick={() => onDrill('district', 'receive')} />
-          </Panel>
+            </Panel>
+    
+            <Panel title="Open orders" sub="Transcript Services · Awaiting fulfillment">
+              <BarTable
+                caption={`${openTotal} open orders across ${openRows.length} ${openRows.length === 1 ? 'school' : 'schools'}, most outstanding first.`}
+                valueLabel="Open orders"
+                rows={openRows}
+              />
+              <Foot label="View all orders" onClick={() => onDrill('district', 'transcript')} />
+            </Panel>
+    
+            {diplomaRows.length > 0 && (
+              <Panel title="Issue events" sub="Diploma Services · Queued and in progress">
+                <BarTable
+                  caption={`${diplomaTotal} diplomas ready to issue across ${diplomaRows.length} ${diplomaRows.length === 1 ? 'school' : 'schools'}.`}
+                  valueLabel="Ready to issue"
+                  extraCols={['Scheduled', 'In progress']}
+                  rows={diplomaRows}
+                />
+                <Foot label="View issue events" onClick={() => onDrill('district', 'diploma')} />
+              </Panel>
+            )}
+    
+            {dualRows.length > 0 && (
+              <Panel title="New applications" sub="Dual Enrollment · Awaiting review">
+                <BarTable
+                  caption={`${dualTotal} applications awaiting review across ${dualRows.length} ${dualRows.length === 1 ? 'school' : 'schools'}.`}
+                  valueLabel="New applications"
+                  rows={dualRows}
+                />
+                <Foot label="Review applications" onClick={() => onDrill('district', 'dualEnrollment')} />
+              </Panel>
+            )}
+    
+            {receiveSchools.length > 0 && (
+              <Panel
+                title="Waiting to download"
+                sub={`Receive · ${receiveSchools.length} ${receiveSchools.length === 1 ? 'school' : 'schools'}`}
+              >
+                <div className="srol__trend">
+                  <Spark data={RECEIVE_TREND} />
+                  <p className="srol__trend-note">
+                    Documents received per day, last 14 days. Between{' '}
+                    {Math.min(...RECEIVE_TREND)} and {Math.max(...RECEIVE_TREND)} a day, ending on{' '}
+                    {RECEIVE_TREND[RECEIVE_TREND.length - 1]}. The two dips are weekends.
+                  </p>
+                </div>
+                <div className="srol__stats">
+                  <div className="srol__stat">
+                    <span className="srol__stat-value">{RECEIVE_FACTS.toDownload}</span>
+                    <span className="srol__stat-label">Documents to download</span>
+                    <span className="srol__stat-hint">Received but not yet viewed or downloaded.</span>
+                    <button type="button" className="btn btn--secondary">
+                      View documents
+                    </button>
+                  </div>
+                  <div className="srol__stat">
+                    <span className="srol__stat-value">{RECEIVE_FACTS.pendingZips}</span>
+                    <span className="srol__stat-label">Pending ZIP downloads</span>
+                    <span className="srol__stat-hint">Batched automatically by a workflow.</span>
+                    <button type="button" className="btn btn--secondary">
+                      Download all
+                    </button>
+                  </div>
+                </div>
+                <Foot label="View Parchment Cloud" onClick={() => onDrill('district', 'receive')} />
+              </Panel>
+            )}
+    </>
         )}
       </div>
 
