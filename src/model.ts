@@ -526,6 +526,38 @@ export function roleLabel(scope: ScopeId | null, _c: Config): string {
 
 /** Short summary of what a scope grants, shown on each row of the scope dialog. */
 /**
+ * The district dashboard reads across services, so every panel needs the same
+ * school to look like the same school. One colour per school, used by the
+ * donut, the bars and the swatches alike.
+ */
+export const SCHOOL_COLOR: Record<string, string> = {
+  bambusa: '#2a78d6',
+  panda: '#4a3aa7',
+  meridian: '#1baf7a'
+}
+
+/** Orders placed this month. The open queue below is a slice of this, not a rival count. */
+export function monthlyOrders(school: ScopeId, service: ServiceId): number {
+  return (openRequests(school, service) || 0) * 5
+}
+
+/** How many of those are still sitting in the fulfilment queue. */
+export function awaitingFulfilment(school: ScopeId, service: ServiceId): number {
+  const n = openRequests(school, service)
+  return n === 0 ? 0 : Math.max(1, Math.round(n / 35))
+}
+
+/** Diplomas move through stages, so one number per school would hide the bottleneck. */
+export const DIPLOMA_QUEUE: Record<string, { scheduled: number; inProgress: number }> = {
+  panda: { scheduled: 4, inProgress: 1 },
+  bambusa: { scheduled: 3, inProgress: 2 }
+}
+
+/** Documents received per day for the last fortnight. The two dips are weekends. */
+export const RECEIVE_TREND = [31, 38, 44, 40, 43, 18, 14, 33, 46, 49, 45, 47, 24, 19]
+export const RECEIVE_FACTS = { toDownload: 4, pendingZips: 1 }
+
+/**
  * People who can administer the district. A district admin inherits other
  * people's work, so "who else is in here, and is anyone's access going unused"
  * is a district-level question that no single service can answer.

@@ -5,7 +5,8 @@ import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
   activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
-  DISTRICT_USERS
+  DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, awaitingFulfilment, DIPLOMA_QUEUE,
+  RECEIVE_TREND, RECEIVE_FACTS
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -163,12 +164,228 @@ function WorkspaceCard({
   )
 }
 
+/** Ken's panel chrome: title, subtitle, overflow menu, body. */
+function Panel({
+  title,
+  sub,
+  children
+}: {
+  title: string
+  sub?: string
+  children: ReactNode
+}) {
+  return (
+    <section className="panel">
+      <header className="panel__header">
+        <div className="panel__heading">
+          <h2 className="panel__title">{title}</h2>
+          {sub && <p className="panel__subtitle">{sub}</p>}
+        </div>
+        <div className="panel__header-right">
+          <button className="panel__menu" aria-label={`More options for ${title}`}>
+            <span aria-hidden="true">⋮</span>
+          </button>
+        </div>
+      </header>
+      <div className="panel__body">{children}</div>
+    </section>
+  )
+}
+
+function Foot({ label }: { label: string }) {
+  return (
+    <div className="srol__foot">
+      <span className="srol__foot-meta">Updated 2h ago</span>
+      <button className="srol__foot-link" type="button">
+        {label} <span aria-hidden="true">→</span>
+      </button>
+    </div>
+  )
+}
+
+function Crest({ id }: { id: ScopeId }) {
+  return (
+    <span className="srt__crest" aria-hidden="true">
+      <span
+        style={{
+          display: 'block',
+          width: 24,
+          height: 24,
+          borderRadius: 7,
+          background: SCHOOL_COLOR[id] ?? '#64748b'
+        }}
+      />
+    </span>
+  )
+}
+
+/**
+ * One row per school with a proportional bar. The bar is decorative — the
+ * number beside it is the real value, so nothing depends on seeing the fill.
+ */
+function BarTable({
+  caption,
+  valueLabel,
+  rows,
+  extraCols
+}: {
+  caption: string
+  valueLabel: string
+  rows: { id: ScopeId; value: number; cells?: number[] }[]
+  extraCols?: string[]
+}) {
+  const max = Math.max(...rows.map((r) => r.value), 1)
+  const total = rows.reduce((n, r) => n + r.value, 0)
+  const colTotals = (extraCols ?? []).map((_, i) =>
+    rows.reduce((n, r) => n + (r.cells?.[i] ?? 0), 0)
+  )
+  return (
+    <table className="srt">
+      <caption className="srt__caption">{caption}</caption>
+      <colgroup>
+        <col className="srt__col-school" />
+        {(extraCols ?? []).map((c) => (
+          <col className="srt__col-num" key={c} />
+        ))}
+        <col className="srt__col-bar" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">School</th>
+          {(extraCols ?? []).map((c) => (
+            <th scope="col" className="srt__num" key={c}>
+              {c}
+            </th>
+          ))}
+          <th scope="col">{valueLabel}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id}>
+            <th scope="row">
+              <span className="srt__school">
+                <Crest id={r.id} />
+                <span className="srt__school-text">
+                  <span className="srt__school-name">{SCOPES[r.id].name}</span>
+                </span>
+              </span>
+            </th>
+            {(extraCols ?? []).map((c, i) => (
+              <td className="srt__num" data-label={c} key={c}>
+                {r.cells?.[i] ?? 0}
+              </td>
+            ))}
+            <td className="srt__bar-cell" data-label={valueLabel}>
+              <span className="srt__bar-wrap">
+                <span className="srt__bar-track" aria-hidden="true">
+                  <span
+                    className="srt__bar-fill"
+                    style={{
+                      width: `${Math.round((r.value / max) * 100)}%`,
+                      background: SCHOOL_COLOR[r.id] ?? '#64748b'
+                    }}
+                  />
+                </span>
+                <span className="srt__bar-value">{r.value}</span>
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row">Total</th>
+          {(extraCols ?? []).map((c, i) => (
+            <td className="srt__num" data-label={c} key={c}>
+              {colTotals[i]}
+            </td>
+          ))}
+          <td className="srt__bar-cell" data-label={valueLabel}>
+            <span className="srt__bar-wrap">
+              <span className="srt__bar-track srt__bar-track--empty" aria-hidden="true" />
+              <span className="srt__bar-value">{total}</span>
+            </span>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  )
+}
+
+/** Share of orders by school. Decorative — the table beside it carries the data. */
+function Donut({ slices, total }: { slices: { id: ScopeId; value: number }[]; total: number }) {
+  const r = 70
+  const c = 2 * Math.PI * r
+  let at = 0
+  return (
+    <svg width="186" height="186" viewBox="0 0 186 186" aria-hidden="true" focusable="false">
+      <g transform="rotate(-90 93 93)">
+        {slices.map((s) => {
+          const frac = total ? s.value / total : 0
+          const el = (
+            <circle
+              key={s.id}
+              cx="93"
+              cy="93"
+              r={r}
+              fill="none"
+              stroke={SCHOOL_COLOR[s.id] ?? '#64748b'}
+              strokeWidth="26"
+              strokeDasharray={`${c * frac} ${c}`}
+              strokeDashoffset={-c * at}
+            />
+          )
+          at += frac
+          return el
+        })}
+      </g>
+      <text
+        x="93"
+        y="93"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="30"
+        fontWeight="700"
+        fill="var(--heading-basecolor)"
+      >
+        {total.toLocaleString()}
+      </text>
+    </svg>
+  )
+}
+
+function Spark({ data }: { data: number[] }) {
+  const w = 760
+  const h = 110
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * (w - 12) + 6
+    const y = h - 10 - ((v - min) / Math.max(1, max - min)) * (h - 28)
+    return [x, y] as const
+  })
+  return (
+    <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true" focusable="false">
+      <line x1="6" y1={h - 6} x2={w - 6} y2={h - 6} stroke="var(--nav-border-color)" />
+      <polyline
+        fill="none"
+        stroke="#2a78d6"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        points={pts.map(([x, y]) => `${x},${y}`).join(' ')}
+      />
+      <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="4.5" fill="#2a78d6" />
+    </svg>
+  )
+}
+
 /**
  * The district roll-up. A district runs several services at once and each one
- * pulls in a different set of schools, so this answers "how is the district
- * doing" before asking you to pick a service. The schools filter is here
- * because a roll-up across every school is often not the question: a district
- * admin usually wants two of them side by side.
+ * pulls in a different set of schools, so this reports across all of them
+ * before asking you to pick one. The schools filter is here because a roll-up
+ * across every school is often not the question.
  */
 function DistrictOverview({
   svcs,
@@ -178,6 +395,7 @@ function DistrictOverview({
   onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
 }) {
   const [picked, setPicked] = useState<ScopeId[]>([...SCHOOL_IDS])
+  const [openFilter, setOpenFilter] = useState(false)
   const [note, setNote] = useState('')
   const all = picked.length === SCHOOL_IDS.length
 
@@ -197,126 +415,332 @@ function DistrictOverview({
     )
   }
 
-  // Each service only counts the picked schools that actually run it, so a
-  // service nobody selected drops to zero rather than silently showing the
-  // district total.
-  const rows = useMemo(
-    () =>
-      svcs.map((sv) => {
-        const run = schoolsOffering(sv)
-        const inView = run.filter((id) => picked.includes(id))
-        return {
-          sv,
-          run,
-          inView,
-          open: inView.reduce((n, id) => n + openRequests(id, sv), 0)
-        }
-      }),
-    [svcs, picked]
-  )
+  const inView = (sv: ServiceId) => schoolsOffering(sv).filter((id) => picked.includes(id))
 
-  const total = rows.reduce((n, r) => n + r.open, 0)
-  const live = rows.filter((r) => r.inView.length > 0).length
+  const orderRows = useMemo(
+    () =>
+      inView('transcript')
+        .map((id) => ({ id, value: monthlyOrders(id, 'transcript') }))
+        .sort((a, b) => b.value - a.value),
+    [picked]
+  )
+  const orderTotal = orderRows.reduce((n, r) => n + r.value, 0)
+
+  const openRows = inView('transcript')
+    .map((id) => ({ id, value: awaitingFulfilment(id, 'transcript') }))
+    .sort((a, b) => b.value - a.value)
+  const openTotal = openRows.reduce((n, r) => n + r.value, 0)
+
+  const diplomaRows = inView('diploma')
+    .map((id) => ({
+      id,
+      value: openRequests(id, 'diploma'),
+      cells: [DIPLOMA_QUEUE[id]?.scheduled ?? 0, DIPLOMA_QUEUE[id]?.inProgress ?? 0]
+    }))
+    .sort((a, b) => b.value - a.value)
+  const diplomaTotal = diplomaRows.reduce((n, r) => n + r.value, 0)
+
+  const dualRows = inView('dualEnrollment')
+    .map((id) => ({ id, value: Math.max(1, Math.round(openRequests(id, 'dualEnrollment') / 24)) }))
+    .sort((a, b) => b.value - a.value)
+  const dualTotal = dualRows.reduce((n, r) => n + r.value, 0)
+
+  const receiveSchools = inView('receive')
+  const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
 
   return (
     <div className="grid2">
       <div className="col-main">
-        <Card
-          title="All services"
-          sub="Every service the district runs, with the schools rolled up to each one. Open a service to work in it."
-        >
-          <fieldset className="schfilter">
-            <legend className="schfilter__legend">Schools</legend>
-            {SCHOOL_IDS.map((id) => (
-              <label key={id} className="schfilter__chip">
-                <input
-                  type="checkbox"
-                  checked={picked.includes(id)}
-                  onChange={() => toggle(id)}
-                />
-                <span>{SCOPES[id].name}</span>
-              </label>
-            ))}
-            <span className="schfilter__count">
-              {all ? `All ${SCHOOL_IDS.length} schools` : `${picked.length} of ${SCHOOL_IDS.length}`}
+        <section className="ayd" aria-labelledby="ayd-greeting">
+          <p className="ayd__greeting" id="ayd-greeting">
+            <span className="ayd__spark" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ayd-grad)">
+                <path d="M10.2 4.8C13.1 10.5 13.1 10.5 18.8 13.4C13.1 16.3 13.1 16.3 10.2 22C7.3 16.3 7.3 16.3 1.6 13.4C7.3 10.5 7.3 10.5 10.2 4.8Z" />
+                <path d="M18.6 1.7C19.9 4.3 19.9 4.3 22.5 5.6C19.9 6.9 19.9 6.9 18.6 9.5C17.3 6.9 17.3 6.9 14.7 5.6C17.3 4.3 17.3 4.3 18.6 1.7Z" />
+              </svg>
             </span>
-          </fieldset>
+            <span className="ayd__greeting-text">Welcome back, Peter!</span>
+          </p>
+          <p className="ayd__sub">Ask anything about activity across your schools.</p>
+          <svg width="0" height="0" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="ayd-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#944fb3" />
+                <stop offset="100%" stopColor="#027887" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <form className="ayd__form" onSubmit={(e) => e.preventDefault()}>
+            <button
+              type="button"
+              className="ayd__plus"
+              aria-label="Add a file or a report for context"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+            <input
+              className="ayd__input"
+              id="ayd-prompt"
+              placeholder="Enter a prompt"
+              aria-label="Ask about activity across your schools"
+            />
+            <button type="submit" className="ayd__send" aria-label="Ask">
+              <span aria-hidden="true">↑</span>
+            </button>
+          </form>
+          <ul className="ayd__suggestions">
+            {[
+              'Which school has the most unfulfilled orders?',
+              'How is order volume split across the network?',
+              "Is anyone's access going unused?"
+            ].map((q) => (
+              <li key={q}>
+                <button type="button" className="ayd__suggestion">
+                  {q}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <Panel title="Order fulfillment" sub="Transcript Services · This month">
+          <div className="lc">
+            <div className="lc__group">
+              <div className="lc__wrap">
+                <button
+                  type="button"
+                  className="lc__btn"
+                  aria-expanded={openFilter}
+                  onClick={() => setOpenFilter(!openFilter)}
+                >
+                  <span className="lc__btn-label">Schools</span>
+                  <span className="lc__btn-summary">
+                    {all ? 'All' : `${picked.length} of ${SCHOOL_IDS.length}`}
+                  </span>
+                  <span aria-hidden="true">▾</span>
+                </button>
+                {openFilter && (
+                  <fieldset className="schfilter">
+                    <legend className="visually-hidden">Which schools to include</legend>
+                    {SCHOOL_IDS.map((id) => (
+                      <label key={id} className="schfilter__chip">
+                        <input
+                          type="checkbox"
+                          checked={picked.includes(id)}
+                          onChange={() => toggle(id)}
+                        />
+                        <span>{SCOPES[id].name}</span>
+                      </label>
+                    ))}
+                  </fieldset>
+                )}
+              </div>
+            </div>
+            <p className="lc__count">{`${picked.length} ${picked.length === 1 ? 'school' : 'schools'}`}</p>
+          </div>
           <div className="visually-hidden" role="status" data-dist-live>
             {note}
           </div>
 
-          <div className="svcgrid">
-            {rows.map(({ sv, run, inView, open }) => (
-              <div
-                className={`svccard${inView.length === 0 ? ' svccard--off' : ''}`}
-                key={sv}
-              >
-                <div className="svccard__head">
-                  <h3 className="svccard__name">{SERVICES[sv].name}</h3>
-                  <span className="svccard__count">{open}</span>
-                </div>
-                <p className="svccard__meta">
-                  {inView.length === 0
-                    ? `Not run by ${picked.length === 1 ? 'that school' : 'any of the selected schools'}`
-                    : run.length === SCHOOL_IDS.length && all
-                      ? `All ${run.length} schools`
-                      : `${inView.length} of ${picked.length} selected · ${inView
-                          .map((id) => SCOPES[id].name)
-                          .join(', ')}`}
-                </p>
-                <button
-                  type="button"
-                  className="svccard__go"
-                  onClick={() => onDrill('district', sv)}
-                >
-                  Open {SERVICES[sv].name}
+          <div className="osum__body">
+            <div className="osum__chart">
+              <Donut slices={orderRows} total={orderTotal} />
+              <p className="osum__chart-note">
+                Orders this month, across the selected schools
+              </p>
+            </div>
+            <table className="osum__table">
+              <caption className="osum__caption">Transcript Services orders by school</caption>
+              <thead>
+                <tr>
+                  <th scope="col">School</th>
+                  <th scope="col" className="osum__num">
+                    Orders
+                  </th>
+                  <th scope="col" className="osum__num">
+                    Share
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderRows.map((r) => (
+                  <tr key={r.id}>
+                    <th scope="row" className="osum__school">
+                      <span
+                        className="osum__swatch"
+                        aria-hidden="true"
+                        style={{ background: SCHOOL_COLOR[r.id] }}
+                      />
+                      {SCOPES[r.id].name}
+                    </th>
+                    <td className="osum__num">{r.value.toLocaleString()}</td>
+                    <td className="osum__num osum__share">
+                      {`${Math.round((r.value / Math.max(1, orderTotal)) * 100)}%`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td className="osum__num">{orderTotal.toLocaleString()}</td>
+                  <td className="osum__num osum__share">100%</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="osum__ai">
+            <span className="osum__ai-spark" aria-hidden="true">
+              ✦
+            </span>
+            This summary is powered by IgniteAI and reflects the latest activity.
+          </p>
+          <div className="osum__foot">
+            <span className="osum__foot-meta">Updated 2h ago</span>
+            <button
+              className="osum__foot-link"
+              type="button"
+              onClick={() => onDrill('district', 'transcript')}
+            >
+              View Details <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </Panel>
+
+        <Panel title="Open orders" sub="Transcript Services · Awaiting fulfillment">
+          <BarTable
+            caption={`${openTotal} open orders across ${openRows.length} ${openRows.length === 1 ? 'school' : 'schools'}, most outstanding first.`}
+            valueLabel="Open orders"
+            rows={openRows}
+          />
+          <Foot label="View all orders" />
+        </Panel>
+
+        {diplomaRows.length > 0 && (
+          <Panel title="Issue events" sub="Diploma Services · Queued and in progress">
+            <BarTable
+              caption={`${diplomaTotal} diplomas ready to issue across ${diplomaRows.length} ${diplomaRows.length === 1 ? 'school' : 'schools'}.`}
+              valueLabel="Ready to issue"
+              extraCols={['Scheduled', 'In progress']}
+              rows={diplomaRows}
+            />
+            <Foot label="View issue events" />
+          </Panel>
+        )}
+
+        {dualRows.length > 0 && (
+          <Panel title="New applications" sub="Dual Enrollment · Awaiting review">
+            <BarTable
+              caption={`${dualTotal} applications awaiting review across ${dualRows.length} ${dualRows.length === 1 ? 'school' : 'schools'}.`}
+              valueLabel="New applications"
+              rows={dualRows}
+            />
+            <Foot label="Review applications" />
+          </Panel>
+        )}
+
+        {receiveSchools.length > 0 && (
+          <Panel
+            title="Waiting to download"
+            sub={`Receive · ${receiveSchools.length} ${receiveSchools.length === 1 ? 'school' : 'schools'}`}
+          >
+            <div className="srol__trend">
+              <Spark data={RECEIVE_TREND} />
+              <p className="srol__trend-note">
+                Documents received per day, last 14 days. The two dips are weekends.
+              </p>
+            </div>
+            <div className="srol__stats">
+              <div className="srol__stat">
+                <span className="srol__stat-value">{RECEIVE_FACTS.toDownload}</span>
+                <span className="srol__stat-label">Documents to download</span>
+                <span className="srol__stat-hint">Received but not yet viewed or downloaded.</span>
+                <button type="button" className="btn btn--secondary">
+                  View documents
                 </button>
               </div>
-            ))}
-          </div>
-        </Card>
+              <div className="srol__stat">
+                <span className="srol__stat-value">{RECEIVE_FACTS.pendingZips}</span>
+                <span className="srol__stat-label">Pending ZIP downloads</span>
+                <span className="srol__stat-hint">Batched automatically by a workflow.</span>
+                <button type="button" className="btn btn--secondary">
+                  Download all
+                </button>
+              </div>
+            </div>
+            <Foot label="View Parchment Cloud" />
+          </Panel>
+        )}
       </div>
 
       <div className="col-side">
-        <Card
-          title="Your network"
-          sub={all ? 'Bambusa District, across every service.' : 'Limited to the schools you selected.'}
-        >
-          <div className="metrics">
-            <Metric value={String(total)} label="Open items" />
-            <Metric value={String(live)} label="Services in use" />
-            <Metric value={String(picked.length)} label="Schools" />
-          </div>
-        </Card>
+        <Panel title="Your network">
+          <dl className="adash__facts">
+            <div className="adash__fact">
+              <dt className="adash__fact-label">Schools</dt>
+              <dd className="adash__fact-value">{picked.length}</dd>
+            </div>
+            <div className="adash__fact">
+              <dt className="adash__fact-label">Services in use</dt>
+              <dd className="adash__fact-value">{servicesInUse}</dd>
+            </div>
+          </dl>
+          <p className="adash__note">Counted from the schools and services on your account.</p>
+          <button type="button" className="btn btn--secondary">
+            Manage schools
+          </button>
+        </Panel>
 
-        <Card title="District users" sub={`${DISTRICT_USERS.total} other people manage this district.`}>
-          <ul className="dusers">
+        <Panel title="District users">
+          <p className="dusers__lead">
+            <span className="dusers__count">{DISTRICT_USERS.total}</span>
+            <span className="dusers__count-label">other people manage this district</span>
+          </p>
+          <ul className="dusers__list">
             <li className="dusers__row">
-              <span className="dusers__n">{DISTRICT_USERS.active}</span>
-              <span className="dusers__t">
-                active
-                <span className="dusers__s">Signed in within 30 days</span>
+              <span className="dusers__icon dusers__icon--ok" aria-hidden="true">
+                ✓
+              </span>
+              <span className="dusers__row-text">
+                <span className="dusers__row-value">{`${DISTRICT_USERS.active} active`}</span>
+                <span className="dusers__row-hint">Signed in within 30 days</span>
               </span>
             </li>
-            <li className="dusers__row dusers__row--warn">
-              <span className="dusers__n">{DISTRICT_USERS.dormant}</span>
-              <span className="dusers__t">
-                not signed in
-                <span className="dusers__s">
+            <li className="dusers__row dusers__row--attention">
+              <span className="dusers__icon dusers__icon--warn" aria-hidden="true">
+                !
+              </span>
+              <span className="dusers__row-text">
+                <span className="dusers__row-value">{`${DISTRICT_USERS.dormant} not signed in`}</span>
+                <span className="dusers__row-hint">
                   {`No activity for ${DISTRICT_USERS.dormantDays} days. Worth reviewing.`}
                 </span>
               </span>
             </li>
           </ul>
-        </Card>
+          <button type="button" className="btn btn--secondary">
+            Manage users
+          </button>
+        </Panel>
 
-        <Card title="Why this page exists" sub="">
-          <Text as="p" color="secondary" size="small">
-            A district rarely runs one service. Landing you inside one of them would hide the
-            other {svcs.length - 1} and make the district look smaller than it is. This page is
-            the district, and each card drills into a service with the district still selected.
-          </Text>
-        </Card>
+        <Panel title="All services">
+          <div className="svcgrid svcgrid--tight">
+            {svcs.map((sv) => (
+              <button
+                key={sv}
+                type="button"
+                className="svccard__go"
+                onClick={() => onDrill('district', sv)}
+              >
+                {SERVICES[sv].name}
+              </button>
+            ))}
+          </div>
+          <p className="adash__note">
+            Every service the district runs. Open one to work inside it with the district still
+            selected.
+          </p>
+        </Panel>
       </div>
     </div>
   )
