@@ -1309,64 +1309,178 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 }
 .osum__ai-spark { color: #944fb3; font-size: 15px; }
 
-/* ---- Services summary (our answer to "a district runs several services") ---- */
-.lc--dash {
-  margin: 0 0 var(--space-lg) 0;
-  padding: 0;
-  border-bottom: 0;
+/* ---- Attention band + service cards ----
+   Exceptions first, then every entitled service weighted by urgency. The gap
+   between a .svcc and a .svcc--due is the design; if they looked alike this
+   would be the data table again in a nicer box. */
+.lc--dash { margin: 0 0 var(--space-lg) 0; padding: 0; border-bottom: 0; }
+
+.att { list-style: none; margin: 0; padding: 0; }
+.att__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--nav-border-color);
 }
-.ssum__name {
-  font-family: var(--fontfamily-heading);
-  font-weight: var(--fontweight-heading-strong);
-  font-size: var(--fontsize-textbase);
-  color: var(--heading-basecolor);
-}
-.ssum__schools {
-  display: block;
-  font-size: var(--fontsize-textsm);
-  color: var(--heading-basecolor);
-}
-.ssum__schoolnames {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--text-mutedcolor);
-}
-.ssum__metric {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--background-pagecolor);
-  font-size: var(--fontsize-textsm);
-  color: var(--text-mutedcolor);
-}
-.ssum__metric strong {
-  font-family: var(--fontfamily-heading);
-  font-size: var(--fontsize-textbase);
-  color: var(--heading-basecolor);
-}
-.ssum__metric--due {
-  background: #fdf3e3;
-  color: #6b4a12;
-}
-.ssum__metric--due strong { color: #6b4a12; }
-.ssum__go { text-align: right; white-space: nowrap; }
-[data-ui-dark='true'] .ssum__metric { background: #1b2733; }
-[data-ui-dark='true'] .ssum__metric--due { background: #3a2f16; color: #f1d9a6; }
-[data-ui-dark='true'] .ssum__metric--due strong { color: #f1d9a6; }
-.ssum__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--text-mutedcolor);
+.att__row:first-child { border-top: 0; padding-top: 0; }
+.att__mark {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
   flex: none;
-  align-self: center;
-}
-.ssum__metric--due .ssum__dot {
   background: #b5720f;
   border-radius: 2px;
   transform: rotate(45deg);
 }
+.att__body { flex: 1 1 auto; min-width: 0; }
+.att__phrase {
+  margin: 0;
+  font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong);
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--heading-basecolor);
+}
+.att__meta {
+  margin: 3px 0 0 0;
+  font-size: var(--fontsize-textsm);
+  line-height: 1.4;
+  color: var(--text-mutedcolor);
+}
+.att__go { flex: none; align-self: center; }
+.att--clear { display: flex; align-items: flex-start; gap: var(--space-md); }
+.att__clear-mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #e3f3ea;
+  color: #126b45;
+  font-size: 15px;
+}
+.att__clear-title {
+  margin: 2px 0 0 0;
+  font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong);
+  font-size: 16px;
+  color: var(--heading-basecolor);
+}
+.att__clear-sub {
+  margin: 3px 0 0 0;
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+
+.svcc__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  gap: var(--space-md);
+}
+.svcc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-md) var(--space-md) 14px;
+  border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-card-sm);
+  background: var(--background-containercolor);
+}
+.svcc__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-mutedcolor);
+}
+.svcc__status-mark {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--text-mutedcolor);
+}
+.svcc__h { margin: 0; }
+.svcc__title {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong);
+  font-size: var(--fontsize-textbase);
+  line-height: 1.25;
+  color: var(--text-link-color);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.svcc__title:hover { text-decoration-thickness: 2px; }
+.svcc__metric {
+  margin: 0;
+  font-size: var(--fontsize-textsm);
+  line-height: 1.35;
+  color: var(--text-mutedcolor);
+}
+
+/* The loud state. */
+.svcc--due { border-color: #e2bd7a; box-shadow: var(--shadow-elevation1); }
+.svcc--due::before {
+  content: '';
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 4px;
+  border-radius: var(--radius-card-sm) 0 0 var(--radius-card-sm);
+  background: #b5720f;
+}
+.svcc--due .svcc__status { color: #6b4a12; font-weight: 700; }
+.svcc--due .svcc__status-mark { background: #b5720f; border-radius: 2px; transform: rotate(45deg); }
+.svcc--due .svcc__metric {
+  font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong);
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--heading-basecolor);
+}
+
+.svcc__cov { margin-top: 2px; }
+.svcc__cov-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: var(--text-mutedcolor);
+  cursor: pointer;
+}
+.svcc__cov-btn:hover { color: var(--heading-basecolor); }
+.svcc__chev { display: inline-block; transition: transform 0.12s ease; }
+.svcc__chev--open { transform: rotate(90deg); }
+.svcc__cov-list {
+  margin: 4px 0 0 0;
+  padding: 0 0 0 13px;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-mutedcolor);
+}
+
+[data-ui-dark='true'] .att__mark,
+[data-ui-dark='true'] .svcc--due::before,
+[data-ui-dark='true'] .svcc--due .svcc__status-mark { background: #e0a94f; }
+[data-ui-dark='true'] .svcc--due { border-color: #6b5324; }
+[data-ui-dark='true'] .svcc--due .svcc__status { color: #f1d9a6; }
+[data-ui-dark='true'] .att__clear-mark { background: #16372a; color: #7fd6ab; }
+.svcc__metric strong { font-family: var(--fontfamily-heading); color: var(--heading-basecolor); }
+.svcc--due .svcc__metric strong { font-size: 22px; display: block; line-height: 1.1; }

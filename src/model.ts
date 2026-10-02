@@ -190,33 +190,71 @@ export function openRequests(scope: ScopeId, service: ServiceId): number {
  * services summary would be the same lie the nav is trying to fix -- the label
  * travels with the number.
  */
-export const SERVICE_METRIC: Record<
-  ServiceId,
-  { label: string; attention: boolean; of: (id: ScopeId) => number }
-> = {
+type Metric = {
+  label: string
+  attention: boolean
+  of: (id: ScopeId) => number
+  /** Said as a sentence, because "280" on its own is not a finding. */
+  phrase: (n: number) => string
+  /**
+   * How long the oldest waiting item has sat. The band sorts on this rather
+   * than on the raw count: 280 diplomas and 19 orders are different units of
+   * different things, so ranking them by size would be meaningless. Time
+   * waited is the one axis every service shares.
+   */
+  waitingDays: number
+}
+
+export const SERVICE_METRIC: Record<ServiceId, Metric> = {
   transcript: {
     label: 'open orders',
     attention: true,
-    of: (id) => Math.max(1, Math.round(openRequests(id, 'transcript') / 35))
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'transcript') / 35)),
+    phrase: (n) => `${n} ${n === 1 ? 'order is' : 'orders are'} waiting to be fulfilled`,
+    waitingDays: 6
   },
-  diploma: { label: 'ready to issue', attention: true, of: (id) => openRequests(id, 'diploma') },
+  diploma: {
+    label: 'ready to issue',
+    attention: true,
+    of: (id) => openRequests(id, 'diploma'),
+    phrase: (n) => `${n} ${n === 1 ? 'diploma is' : 'diplomas are'} ready to issue`,
+    waitingDays: 11
+  },
   dualEnrollment: {
     label: 'awaiting review',
     attention: true,
-    of: (id) => Math.max(1, Math.round(openRequests(id, 'dualEnrollment') / 24))
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'dualEnrollment') / 24)),
+    phrase: (n) => `${n} ${n === 1 ? 'application is' : 'applications are'} awaiting review`,
+    waitingDays: 4
   },
   receive: {
     label: 'to download',
     attention: true,
-    of: (id) => Math.max(1, Math.round(openRequests(id, 'receive') / 60))
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'receive') / 60)),
+    phrase: (n) => `${n} ${n === 1 ? 'document is' : 'documents are'} waiting to be downloaded`,
+    waitingDays: 2
   },
   send: {
     label: 'in transit',
     attention: false,
-    of: (id) => Math.max(1, Math.round(openRequests(id, 'send') / 12))
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'send') / 12)),
+    phrase: (n) => `${n} ${n === 1 ? 'document' : 'documents'} in transit`,
+    waitingDays: 0
   },
-  verify: { label: 'pending checks', attention: true, of: (id) => openRequests(id, 'verify') },
-  badges: { label: 'issued this term', attention: false, of: (id) => openRequests(id, 'badges') }
+  verify: {
+    label: 'pending checks',
+    attention: true,
+    of: (id) => openRequests(id, 'verify'),
+    phrase: (n) => `${n} verification ${n === 1 ? 'request is' : 'requests are'} pending`,
+    waitingDays: 8
+  },
+  badges: {
+    label: 'issued this term',
+    attention: false,
+    of: (id) => openRequests(id, 'badges'),
+    phrase: (n) => `${n} issued this term`,
+    waitingDays: 0
+  }
 }
 
 /**
@@ -232,7 +270,9 @@ export type ServiceRollup = {
   offered: number
   value: number
   label: string
+  phrase: string
   attention: boolean
+  waitingDays: number
 }
 
 export function serviceRollups(services: ServiceId[], inScope: ScopeId[]): ServiceRollup[] {
@@ -241,18 +281,38 @@ export function serviceRollups(services: ServiceId[], inScope: ScopeId[]): Servi
       const offering = schoolsOffering(id)
       const schools = offering.filter((s) => inScope.includes(s))
       const m = SERVICE_METRIC[id]
+      const value = schools.reduce((n, s) => n + m.of(s), 0)
       return {
         id,
         name: SERVICES[id].name,
         schools,
         offered: offering.length,
-        value: schools.reduce((n, s) => n + m.of(s), 0),
+        value,
         label: m.label,
-        attention: m.attention
+        phrase: m.phrase(value),
+        attention: m.attention && value > 0,
+        waitingDays: m.waitingDays
       }
     })
     .filter((r) => r.schools.length > 0)
-    .sort((a, b) => Number(b.attention) - Number(a.attention) || b.value - a.value)
+    .sort(
+      (a, b) =>
+        Number(b.attention) - Number(a.attention) ||
+        b.waitingDays - a.waitingDays ||
+        a.name.localeCompare(b.name)
+    )
+}
+
+/**
+ * The exception band. Only services with work actually waiting, ranked by how
+ * long the oldest item has sat rather than by count, and capped so the band
+ * stays monitorable -- a list of every service would be the enumeration this
+ * screen is trying to stop being.
+ */
+export function districtAttention(services: ServiceId[], inScope: ScopeId[], cap = 5) {
+  return serviceRollups(services, inScope)
+    .filter((r) => r.attention)
+    .slice(0, cap)
 }
 
 /**

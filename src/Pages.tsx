@@ -6,7 +6,7 @@ import {
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
   activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
   DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, awaitingFulfilment, DIPLOMA_QUEUE,
-  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups
+  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups, districtAttention, type ServiceRollup
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -203,71 +203,121 @@ function Foot({ label, onClick }: { label: string; onClick?: () => void }) {
   )
 }
 
+function SchoolList({ r }: { r: ServiceRollup }) {
+  const [open, setOpen] = useState(false)
+  const everywhere = r.schools.length === r.offered
+  return (
+    <div className="svcc__cov">
+      <button
+        type="button"
+        className="svcc__cov-btn"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <span aria-hidden="true" className={`svcc__chev${open ? ' svcc__chev--open' : ''}`}>
+          ›
+        </span>
+        {everywhere
+          ? `${r.offered} ${r.offered === 1 ? 'school' : 'schools'}`
+          : `${r.schools.length} of ${r.offered} schools`}
+      </button>
+      {open && (
+        <ul className="svcc__cov-list">
+          {r.schools.map((id) => (
+            <li key={id}>{SCOPES[id].name}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /**
- * The answer to "a district may run several services and each one rolls up a
- * different set of schools". Everything the district is entitled to shows here,
- * with its own school count in words, so the difference between services is
- * readable rather than inferred from four separate panels further down.
+ * Exceptions first, and only exceptions. Ranked by how long the oldest item has
+ * waited, because the counts belong to different services and are not
+ * comparable to each other. Each row goes to the queue inside its service, not
+ * to the service's front door -- the point is to land on the work.
  */
-function ServicesSummary({
+function AttentionBand({
   rows,
   onDrill
 }: {
-  rows: ReturnType<typeof serviceRollups>
+  rows: ServiceRollup[]
+  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="att att--clear">
+        <span className="att__clear-mark" aria-hidden="true">
+          ✓
+        </span>
+        <div>
+          <p className="att__clear-title">Nothing is waiting on you</p>
+          <p className="att__clear-sub">
+            Every service in this district is clear for the schools you have selected.
+          </p>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <ul className="att">
+      {rows.map((r) => (
+        <li className="att__row" key={r.id}>
+          <span className="att__mark" aria-hidden="true" />
+          <div className="att__body">
+            <p className="att__phrase">{r.phrase}</p>
+            <p className="att__meta">
+              {r.name} · {r.schools.map((id) => SCOPES[id].name).join(', ')} · oldest has waited{' '}
+              {r.waitingDays} days
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn--secondary att__go"
+            onClick={() => onDrill('district', r.id)}
+          >
+            Open<span className="visually-hidden"> {r.name}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/**
+ * Every entitled service, so a district always sees its whole estate -- but
+ * weighted, not enumerated. A service with work waiting is loud; a service with
+ * nothing to do keeps its place and goes quiet. If both states looked the same
+ * this would be the table again in a different shape.
+ */
+function ServiceCards({
+  rows,
+  onDrill
+}: {
+  rows: ServiceRollup[]
   onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
 }) {
   return (
-    <table className="srt ssum">
-      <caption className="srt__caption">
-        {rows.length} services run across this district. Each one rolls up its own set of schools,
-        shown below. Services needing attention are listed first.
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col">Service</th>
-          <th scope="col">Schools</th>
-          <th scope="col">Current activity</th>
-          <th scope="col">
-            <span className="visually-hidden">Open the service</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.id}>
-            <th scope="row">
-              <span className="ssum__name">{r.name}</span>
-            </th>
-            <td data-label="Schools">
-              <span className="ssum__schools">
-                {r.schools.length === r.offered
-                  ? `${r.offered} ${r.offered === 1 ? 'school' : 'schools'}`
-                  : `${r.schools.length} of ${r.offered} schools`}
-              </span>
-              <span className="ssum__schoolnames">
-                {r.schools.map((id) => SCOPES[id].name).join(', ')}
-              </span>
-            </td>
-            <td data-label="Current activity">
-              <span className={`ssum__metric${r.attention ? ' ssum__metric--due' : ''}`}>
-                {r.attention && <span className="visually-hidden">Needs attention: </span>}
-                <span className="ssum__dot" aria-hidden="true" />
-                <strong>{r.value}</strong> {r.label}
-              </span>
-            </td>
-            <td className="ssum__go">
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={() => onDrill('district', r.id)}
-              >
-                Open<span className="visually-hidden"> {r.name}</span>
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ul className="svcc__grid">
+      {rows.map((r) => (
+        <li className={`svcc${r.attention ? ' svcc--due' : ''}`} key={r.id}>
+          <p className="svcc__status">
+            <span className="svcc__status-mark" aria-hidden="true" />
+            {r.attention ? 'Needs attention' : 'All clear'}
+          </p>
+          <h3 className="svcc__h">
+            <button type="button" className="svcc__title" onClick={() => onDrill('district', r.id)}>
+              {r.name}
+            </button>
+          </h3>
+          <p className="svcc__metric">
+            <strong>{r.value}</strong> {r.label}
+          </p>
+          <SchoolList r={r} />
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -516,6 +566,7 @@ function DistrictOverview({
   const receiveSchools = inView('receive')
   const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
   const rollups = useMemo(() => serviceRollups(svcs, picked), [svcs, picked])
+  const attention = useMemo(() => districtAttention(svcs, picked, 3), [svcs, picked])
 
   return (
     <div className="grid2">
@@ -558,8 +609,22 @@ function DistrictOverview({
           {note}
         </div>
 
-        <Panel title="Your services" sub={`${SCOPES.district.name} · across all schools`}>
-          <ServicesSummary rows={rollups} onDrill={onDrill} />
+        <Panel
+          title="Needs your attention"
+          sub={
+            attention.length > 0
+              ? `Longest waiting first, across ${rollups.length} services. Every service is listed below.`
+              : 'Across every service this district runs'
+          }
+        >
+          <AttentionBand rows={attention} onDrill={onDrill} />
+        </Panel>
+
+        <Panel
+          title="Your services"
+          sub={`${rollups.length} services · each one covers its own set of schools`}
+        >
+          <ServiceCards rows={rollups} onDrill={onDrill} />
         </Panel>
 
         <section className="ayd" aria-labelledby="ayd-greeting">
