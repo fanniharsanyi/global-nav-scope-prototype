@@ -1308,3 +1308,65 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   width: 100%;
 }
 .osum__ai-spark { color: #944fb3; font-size: 15px; }
+
+/* ---- Services summary (our answer to "a district runs several services") ---- */
+.lc--dash {
+  margin: 0 0 var(--space-lg) 0;
+  padding: 0;
+  border-bottom: 0;
+}
+.ssum__name {
+  font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong);
+  font-size: var(--fontsize-textbase);
+  color: var(--heading-basecolor);
+}
+.ssum__schools {
+  display: block;
+  font-size: var(--fontsize-textsm);
+  color: var(--heading-basecolor);
+}
+.ssum__schoolnames {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-mutedcolor);
+}
+.ssum__metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--background-pagecolor);
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+.ssum__metric strong {
+  font-family: var(--fontfamily-heading);
+  font-size: var(--fontsize-textbase);
+  color: var(--heading-basecolor);
+}
+.ssum__metric--due {
+  background: #fdf3e3;
+  color: #6b4a12;
+}
+.ssum__metric--due strong { color: #6b4a12; }
+.ssum__go { text-align: right; white-space: nowrap; }
+[data-ui-dark='true'] .ssum__metric { background: #1b2733; }
+[data-ui-dark='true'] .ssum__metric--due { background: #3a2f16; color: #f1d9a6; }
+[data-ui-dark='true'] .ssum__metric--due strong { color: #f1d9a6; }
+.ssum__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--text-mutedcolor);
+  flex: none;
+  align-self: center;
+}
+.ssum__metric--due .ssum__dot {
+  background: #b5720f;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}

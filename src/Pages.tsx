@@ -6,7 +6,7 @@ import {
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
   activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
   DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, awaitingFulfilment, DIPLOMA_QUEUE,
-  RECEIVE_TREND, RECEIVE_FACTS
+  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -192,14 +192,82 @@ function Panel({
   )
 }
 
-function Foot({ label }: { label: string }) {
+function Foot({ label, onClick }: { label: string; onClick?: () => void }) {
   return (
     <div className="srol__foot">
       <span className="srol__foot-meta">Updated 2h ago</span>
-      <button className="srol__foot-link" type="button">
+      <button className="srol__foot-link" type="button" onClick={onClick}>
         {label} <span aria-hidden="true">→</span>
       </button>
     </div>
+  )
+}
+
+/**
+ * The answer to "a district may run several services and each one rolls up a
+ * different set of schools". Everything the district is entitled to shows here,
+ * with its own school count in words, so the difference between services is
+ * readable rather than inferred from four separate panels further down.
+ */
+function ServicesSummary({
+  rows,
+  onDrill
+}: {
+  rows: ReturnType<typeof serviceRollups>
+  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
+}) {
+  return (
+    <table className="srt ssum">
+      <caption className="srt__caption">
+        {rows.length} services run across this district. Each one rolls up its own set of schools,
+        shown below. Services needing attention are listed first.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Service</th>
+          <th scope="col">Schools</th>
+          <th scope="col">Current activity</th>
+          <th scope="col">
+            <span className="visually-hidden">Open the service</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id}>
+            <th scope="row">
+              <span className="ssum__name">{r.name}</span>
+            </th>
+            <td data-label="Schools">
+              <span className="ssum__schools">
+                {r.schools.length === r.offered
+                  ? `${r.offered} ${r.offered === 1 ? 'school' : 'schools'}`
+                  : `${r.schools.length} of ${r.offered} schools`}
+              </span>
+              <span className="ssum__schoolnames">
+                {r.schools.map((id) => SCOPES[id].name).join(', ')}
+              </span>
+            </td>
+            <td data-label="Current activity">
+              <span className={`ssum__metric${r.attention ? ' ssum__metric--due' : ''}`}>
+                {r.attention && <span className="visually-hidden">Needs attention: </span>}
+                <span className="ssum__dot" aria-hidden="true" />
+                <strong>{r.value}</strong> {r.label}
+              </span>
+            </td>
+            <td className="ssum__go">
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => onDrill('district', r.id)}
+              >
+                Open<span className="visually-hidden"> {r.name}</span>
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }
 
@@ -447,10 +515,53 @@ function DistrictOverview({
 
   const receiveSchools = inView('receive')
   const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
+  const rollups = useMemo(() => serviceRollups(svcs, picked), [svcs, picked])
 
   return (
     <div className="grid2">
       <div className="col-main">
+        <div className="lc lc--dash">
+          <div className="lc__group">
+            <div className="lc__wrap">
+              <button
+                type="button"
+                className="lc__btn"
+                aria-expanded={openFilter}
+                onClick={() => setOpenFilter(!openFilter)}
+              >
+                <span className="lc__btn-label">Schools</span>
+                <span className="lc__btn-summary">
+                  {all ? 'All' : `${picked.length} of ${SCHOOL_IDS.length}`}
+                </span>
+                <span aria-hidden="true">▾</span>
+              </button>
+              {openFilter && (
+                <fieldset className="schfilter">
+                  <legend className="visually-hidden">Which schools to include</legend>
+                  {SCHOOL_IDS.map((id) => (
+                    <label key={id} className="schfilter__chip">
+                      <input
+                        type="checkbox"
+                        checked={picked.includes(id)}
+                        onChange={() => toggle(id)}
+                      />
+                      <span>{SCOPES[id].name}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+            </div>
+          </div>
+          <p className="lc__count">Filters every panel on this page</p>
+        </div>
+        <div className="visually-hidden" role="status" data-dist-live>
+          {note}
+        </div>
+
+        <Panel title="Your services" sub={`${SCOPES.district.name} · across all schools`}>
+          <ServicesSummary rows={rollups} onDrill={onDrill} />
+        </Panel>
+
         <section className="ayd" aria-labelledby="ayd-greeting">
           <p className="ayd__greeting" id="ayd-greeting">
             <span className="ayd__spark" aria-hidden="true">
@@ -504,44 +615,6 @@ function DistrictOverview({
         </section>
 
         <Panel title="Order fulfillment" sub="Transcript Services · This month">
-          <div className="lc">
-            <div className="lc__group">
-              <div className="lc__wrap">
-                <button
-                  type="button"
-                  className="lc__btn"
-                  aria-expanded={openFilter}
-                  onClick={() => setOpenFilter(!openFilter)}
-                >
-                  <span className="lc__btn-label">Schools</span>
-                  <span className="lc__btn-summary">
-                    {all ? 'All' : `${picked.length} of ${SCHOOL_IDS.length}`}
-                  </span>
-                  <span aria-hidden="true">▾</span>
-                </button>
-                {openFilter && (
-                  <fieldset className="schfilter">
-                    <legend className="visually-hidden">Which schools to include</legend>
-                    {SCHOOL_IDS.map((id) => (
-                      <label key={id} className="schfilter__chip">
-                        <input
-                          type="checkbox"
-                          checked={picked.includes(id)}
-                          onChange={() => toggle(id)}
-                        />
-                        <span>{SCOPES[id].name}</span>
-                      </label>
-                    ))}
-                  </fieldset>
-                )}
-              </div>
-            </div>
-            <p className="lc__count">{`${picked.length} ${picked.length === 1 ? 'school' : 'schools'}`}</p>
-          </div>
-          <div className="visually-hidden" role="status" data-dist-live>
-            {note}
-          </div>
-
           <div className="osum__body">
             <div className="osum__chart">
               <Donut slices={orderRows} total={orderTotal} />
@@ -613,7 +686,7 @@ function DistrictOverview({
             valueLabel="Open orders"
             rows={openRows}
           />
-          <Foot label="View all orders" />
+          <Foot label="View all orders" onClick={() => onDrill('district', 'transcript')} />
         </Panel>
 
         {diplomaRows.length > 0 && (
@@ -624,7 +697,7 @@ function DistrictOverview({
               extraCols={['Scheduled', 'In progress']}
               rows={diplomaRows}
             />
-            <Foot label="View issue events" />
+            <Foot label="View issue events" onClick={() => onDrill('district', 'diploma')} />
           </Panel>
         )}
 
@@ -635,7 +708,7 @@ function DistrictOverview({
               valueLabel="New applications"
               rows={dualRows}
             />
-            <Foot label="Review applications" />
+            <Foot label="Review applications" onClick={() => onDrill('district', 'dualEnrollment')} />
           </Panel>
         )}
 
@@ -647,7 +720,9 @@ function DistrictOverview({
             <div className="srol__trend">
               <Spark data={RECEIVE_TREND} />
               <p className="srol__trend-note">
-                Documents received per day, last 14 days. The two dips are weekends.
+                Documents received per day, last 14 days. Between{' '}
+                {Math.min(...RECEIVE_TREND)} and {Math.max(...RECEIVE_TREND)} a day, ending on{' '}
+                {RECEIVE_TREND[RECEIVE_TREND.length - 1]}. The two dips are weekends.
               </p>
             </div>
             <div className="srol__stats">
@@ -668,7 +743,7 @@ function DistrictOverview({
                 </button>
               </div>
             </div>
-            <Foot label="View Parchment Cloud" />
+            <Foot label="View Parchment Cloud" onClick={() => onDrill('district', 'receive')} />
           </Panel>
         )}
       </div>
@@ -723,24 +798,6 @@ function DistrictOverview({
           </button>
         </Panel>
 
-        <Panel title="All services">
-          <div className="svcgrid svcgrid--tight">
-            {svcs.map((sv) => (
-              <button
-                key={sv}
-                type="button"
-                className="svccard__go"
-                onClick={() => onDrill('district', sv)}
-              >
-                {SERVICES[sv].name}
-              </button>
-            ))}
-          </div>
-          <p className="adash__note">
-            Every service the district runs. Open one to work inside it with the district still
-            selected.
-          </p>
-        </Panel>
       </div>
     </div>
   )

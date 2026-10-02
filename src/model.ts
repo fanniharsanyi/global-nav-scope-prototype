@@ -185,6 +185,77 @@ export function openRequests(scope: ScopeId, service: ServiceId): number {
 }
 
 /**
+ * The one number that answers "does this service need me today?". Each service
+ * counts a different kind of record, so a shared "open items" column across the
+ * services summary would be the same lie the nav is trying to fix -- the label
+ * travels with the number.
+ */
+export const SERVICE_METRIC: Record<
+  ServiceId,
+  { label: string; attention: boolean; of: (id: ScopeId) => number }
+> = {
+  transcript: {
+    label: 'open orders',
+    attention: true,
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'transcript') / 35))
+  },
+  diploma: { label: 'ready to issue', attention: true, of: (id) => openRequests(id, 'diploma') },
+  dualEnrollment: {
+    label: 'awaiting review',
+    attention: true,
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'dualEnrollment') / 24))
+  },
+  receive: {
+    label: 'to download',
+    attention: true,
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'receive') / 60))
+  },
+  send: {
+    label: 'in transit',
+    attention: false,
+    of: (id) => Math.max(1, Math.round(openRequests(id, 'send') / 12))
+  },
+  verify: { label: 'pending checks', attention: true, of: (id) => openRequests(id, 'verify') },
+  badges: { label: 'issued this term', attention: false, of: (id) => openRequests(id, 'badges') }
+}
+
+/**
+ * A district runs several services at once and each one pulls in its own set of
+ * schools, so the roll-up is indexed by service first and reports the school
+ * count alongside -- that difference is the thing a district admin has no other
+ * way to see.
+ */
+export type ServiceRollup = {
+  id: ServiceId
+  name: string
+  schools: ScopeId[]
+  offered: number
+  value: number
+  label: string
+  attention: boolean
+}
+
+export function serviceRollups(services: ServiceId[], inScope: ScopeId[]): ServiceRollup[] {
+  return services
+    .map((id) => {
+      const offering = schoolsOffering(id)
+      const schools = offering.filter((s) => inScope.includes(s))
+      const m = SERVICE_METRIC[id]
+      return {
+        id,
+        name: SERVICES[id].name,
+        schools,
+        offered: offering.length,
+        value: schools.reduce((n, s) => n + m.of(s), 0),
+        label: m.label,
+        attention: m.attention
+      }
+    })
+    .filter((r) => r.schools.length > 0)
+    .sort((a, b) => Number(b.attention) - Number(a.attention) || b.value - a.value)
+}
+
+/**
  * Each service tracks a different kind of record, so the activity table has to
  * change its columns, not just its rows. Reusing "Learner / Submitted / Status"
  * for Receive and Send would be the same lie as reusing the request count.
