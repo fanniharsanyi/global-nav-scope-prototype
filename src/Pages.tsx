@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import {
-  Table, Text, View, Pill, Link, Metric as UiMetric, ToggleDetails, List, Flex,
-  Heading, ScreenReaderContent, IconWarningSolid, IconCheckMarkSolid, IconArrowOpenEndSolid
+  Table, Text, View, Link, List, Flex,
+  ScreenReaderContent, IconArrowOpenEndSolid
 } from '@instructure/ui'
 import { ISearch, ISliders, IPlus } from './Icons'
 import {
@@ -9,7 +9,7 @@ import {
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
   activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
   DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, awaitingFulfilment, DIPLOMA_QUEUE,
-  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups, districtAttention, type ServiceRollup, SERVICE_METRIC
+  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups, type ServiceRollup, SERVICE_METRIC
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -206,109 +206,6 @@ function Foot({ label, onClick }: { label: string; onClick?: () => void }) {
   )
 }
 
-function SchoolList({ r }: { r: ServiceRollup }) {
-  const everywhere = r.schools.length === r.offered
-  return (
-    <ToggleDetails
-      size="small"
-      summary={
-        <Text size="small" color="secondary">
-          {everywhere
-            ? `${r.offered} ${r.offered === 1 ? 'school' : 'schools'}`
-            : `${r.schools.length} of ${r.offered} schools`}
-        </Text>
-      }
-    >
-      <List isUnstyled margin="xx-small 0 0 0">
-        {r.schools.map((id) => (
-          <List.Item key={id}>
-            <Text size="small" color="secondary">
-              {SCOPES[id].name}
-            </Text>
-          </List.Item>
-        ))}
-      </List>
-    </ToggleDetails>
-  )
-}
-
-/**
- * Exceptions first, and only exceptions. Ranked by how long the oldest item has
- * waited, because the counts belong to different services and are not
- * comparable to each other.
- */
-function AttentionBand({
-  rows,
-  onDrill
-}: {
-  rows: ServiceRollup[]
-  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
-}) {
-  if (rows.length === 0) {
-    return (
-      <Flex alignItems="start" gap="small">
-        <Flex.Item>
-          <Text color="success">
-            <IconCheckMarkSolid />
-          </Text>
-        </Flex.Item>
-        <Flex.Item shouldShrink>
-          <div className="att__body">
-          <span className="att__lede">
-            <Text as="p" weight="bold" lineHeight="condensed">
-              Nothing is waiting on you
-            </Text>
-          </span>
-          <Text as="p" size="small" color="secondary">
-            Every service in this district is clear for the schools you have selected.
-          </Text>
-        </div>
-              </Flex.Item>
-      </Flex>
-    )
-  }
-  return (
-    <List isUnstyled delimiter="solid" itemSpacing="small">
-      {rows.map((r) => (
-        <List.Item key={r.id}>
-          <Flex alignItems="start" gap="small">
-            <Flex.Item>
-              <span className="att__ico">
-                <Text color="warning">
-                  <IconWarningSolid />
-                </Text>
-              </span>
-            </Flex.Item>
-            <Flex.Item shouldGrow shouldShrink>
-              <div className="att__body">
-              <span className="att__lede">
-                <Text as="p" weight="bold" lineHeight="condensed">
-                  {r.phrase}
-                </Text>
-              </span>
-              <Text as="p" size="small" color="secondary">
-                {r.name} · {r.schools.map((id) => SCOPES[id].name).join(', ')} · oldest has waited{' '}
-                {r.waitingDays} days
-              </Text>
-            </div>
-              </Flex.Item>
-            <Flex.Item align="start">
-              <Link
-                isWithinText={false}
-                onClick={() => onDrill('district', r.id)}
-                renderIcon={<IconArrowOpenEndSolid />}
-                iconPlacement="end"
-              >
-                Open<ScreenReaderContent> {r.name}</ScreenReaderContent>
-              </Link>
-            </Flex.Item>
-          </Flex>
-        </List.Item>
-      ))}
-    </List>
-  )
-}
-
 /**
  * One list, not two. Every service the district runs, longest waiting first,
  * each line carrying the schools that actually roll up to that service and
@@ -386,56 +283,6 @@ function ServiceFeed({
         )
       })}
     </List>
-  )
-}
-
-/**
- * Every entitled service, so a district always sees its whole estate -- but
- * weighted, not enumerated. A service with work waiting is loud; a service with
- * nothing to do keeps its place and goes quiet.
- */
-function ServiceCards({
-  rows,
-  onDrill
-}: {
-  rows: ServiceRollup[]
-  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
-}) {
-  return (
-    <ul className="svcc__grid">
-      {rows.map((r) => (
-        <li className={`svcc${r.attention ? ' svcc--due' : ''}`} key={r.id}>
-          <div className="svcc__pill">
-            <Pill
-              color={r.attention ? 'warning' : 'primary'}
-              renderIcon={r.attention ? <IconWarningSolid /> : undefined}
-            >
-              {r.attention ? 'Needs attention' : 'All clear'}
-            </Pill>
-          </div>
-          <Heading level="h4" as="h3">
-            <Link isWithinText={false} onClick={() => onDrill('district', r.id)}>
-              {r.name}
-            </Link>
-          </Heading>
-          {r.attention ? (
-            <UiMetric
-              textAlign="start"
-              renderValue={<span className="svcc__big">{r.value}</span>}
-              renderLabel={<span className="svcc__lab">{r.label}</span>}
-            />
-          ) : (
-            <Text as="p" size="small" color="secondary">
-              <span className="att__lede">
-                <Text weight="bold">{r.value}</Text>
-              </span>{' '}
-              {r.label}
-            </Text>
-          )}
-          <SchoolList r={r} />
-        </li>
-      ))}
-    </ul>
   )
 }
 
@@ -685,7 +532,6 @@ function DistrictOverview({
   const receiveSchools = inView('receive')
   const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
   const rollups = useMemo(() => serviceRollups(svcs, picked), [svcs, picked])
-  const attention = useMemo(() => districtAttention(svcs, picked, 3), [svcs, picked])
   const dense = new URLSearchParams(window.location.search).has('dense')
 
   return (
@@ -850,19 +696,12 @@ function DistrictOverview({
             <Panel
               title="Needs your attention"
               sub={
-                attention.length > 0
-                  ? `Longest waiting first, across ${rollups.length} services. Every service is listed below.`
+                rollups.length > 0
+                  ? `All ${rollups.length} services this district runs, longest waiting first`
                   : 'Across every service this district runs'
               }
             >
-              <AttentionBand rows={attention} onDrill={onDrill} />
-            </Panel>
-    
-            <Panel
-              title="Your services"
-              sub={`${rollups.length} services · each one covers its own set of schools`}
-            >
-              <ServiceCards rows={rollups} onDrill={onDrill} />
+              <ServiceFeed rows={rollups} onDrill={onDrill} />
             </Panel>
             <Panel title="Order fulfillment" sub="Transcript Services · This month">
               <div className="osum__body">
