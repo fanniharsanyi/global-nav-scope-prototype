@@ -969,3 +969,59 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   color: var(--heading-basecolor);
 }
 [data-ui-dark='true'] .wrap__content table { background: var(--surface-raised); }
+
+/* District overview: one card per service the district runs. */
+.svcgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-md);
+}
+.svccard {
+  border: 1px solid var(--nav-border-color);
+  border-radius: 8px;
+  padding: var(--space-md);
+  background: var(--background-containercolor);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.svccard__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.svccard__name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--heading-basecolor);
+}
+.svccard__count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-link-color);
+  line-height: 1;
+}
+.svccard__meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-mutedcolor);
+  flex: 1;
+}
+.svccard__go {
+  margin-top: var(--space-sm);
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--text-link-color);
+  color: var(--text-link-color);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.svccard__go:hover { background: var(--text-link-color); color: #fff; }
+.svccard__go:focus-visible { outline: 2px solid var(--text-link-color); outline-offset: 2px; }
+[data-ui-dark='true'] .svccard { background: #232e3a; border-color: #3c4a57; }

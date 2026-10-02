@@ -552,6 +552,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 prefs={prefs}
                 onPrefs={setPrefs}
                 onDirty={() => setDirty(true)}
+                onDrill={(sc, w) => applyContext(sc, w)}
               />
             </main>
           </div>

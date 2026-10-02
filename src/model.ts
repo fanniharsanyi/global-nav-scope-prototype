@@ -56,12 +56,14 @@ export type Scope = {
 }
 
 /**
- * The inversion this prototype is arguing for.
+ * Entitlement is granted per school, but it is *read* service first.
  *
- * Ken's prototype models `service -> schools`, which is why school has to be
- * re-asked every time service changes, and why four services open on three
- * different schools. Here it is `scope -> services`: scope is the single axis,
- * and the service list is derived from it.
+ * The platform identifies the service a user is entitled to, and the schools
+ * follow from it. That is a constraint, not a preference, so the control asks
+ * for service first and derives the school list from `schoolsOffering`. This
+ * table stays school-keyed because that is the shape the grant actually has;
+ * everything the UI shows is derived from it in the service -> schools
+ * direction.
  */
 export const SCOPES: Record<ScopeId, Scope> = {
   district: {
@@ -69,7 +71,9 @@ export const SCOPES: Record<ScopeId, Scope> = {
     name: 'Bambusa District',
     kind: 'district',
     detail: '3 schools · Denver, Colorado',
-    services: ['transcript', 'diploma', 'dualEnrollment', 'receive', 'send', 'verify', 'badges']
+    // Filled below from the union of the schools, so a district can never
+    // claim a service none of its schools actually run.
+    services: []
   },
   bambusa: {
     id: 'bambusa',
@@ -93,6 +97,11 @@ export const SCOPES: Record<ScopeId, Scope> = {
     services: ['transcript', 'dualEnrollment', 'receive', 'send', 'badges']
   }
 }
+
+export const SCHOOL_IDS_INIT = ['bambusa', 'panda', 'meridian'] as const
+SCOPES.district.services = [...new Set(
+  SCHOOL_IDS_INIT.flatMap((id) => SCOPES[id].services)
+)]
 
 export type Config = {
   shape: 'both' | 'adminOnly' | 'learnerOnly'
@@ -136,6 +145,21 @@ export const SCHOOL_IDS: SchoolId[] = ['bambusa', 'panda', 'meridian']
 /** Which schools in the district actually run a given service. */
 export const schoolsOffering = (s: ServiceId): SchoolId[] =>
   SCHOOL_IDS.filter((id) => SCOPES[id].services.includes(s))
+
+/**
+ * Every service this sign-in can reach, in rail order. This is the top of the
+ * hierarchy: the school list is derived from whichever of these is chosen.
+ */
+export function entitledServices(c: Config): ServiceId[] {
+  if (!isAdmin(c)) return []
+  const seen = new Set<ServiceId>()
+  for (const s of availableScopes(c)) for (const w of servicesFor(s, c)) seen.add(w)
+  return SERVICE_ORDER.filter((id) => seen.has(id))
+}
+
+const SERVICE_ORDER: ServiceId[] = [
+  'transcript', 'diploma', 'dualEnrollment', 'receive', 'send', 'verify', 'badges'
+]
 
 /**
  * Open work per school *per service*. The whole argument is that scope and
@@ -255,12 +279,26 @@ export type NavItem = { id: PageId; label: string; icon: string }
  * flattening services into the rail: there are seven different sets here and
  * four of them contain a page called "Settings".
  */
-export type WorkspaceId = ServiceId | 'learner' | 'platform'
+export type WorkspaceId = ServiceId | 'overview' | 'learner' | 'platform'
 
 export const WORKSPACES: Record<
   WorkspaceId,
   { id: WorkspaceId; name: string; scoped: boolean; icon: string; pages: NavItem[] }
 > = {
+  // A district runs several services, each rolling up a different set of
+  // schools. Landing a district admin inside one arbitrary service hides the
+  // other six, so district admins get a cross-service summary that drills in.
+  overview: {
+    id: 'overview',
+    name: 'District overview',
+    icon: 'chart',
+    scoped: true,
+    pages: [
+      { id: 'dashboard', label: 'All services', icon: 'grid' },
+      { id: 'reports', label: 'Reports', icon: 'chart' },
+      { id: 'schools', label: 'Schools', icon: 'building' }
+    ]
+  },
   transcript: {
     id: 'transcript',
     name: 'Transcript Services',
@@ -374,7 +412,9 @@ export const WORKSPACES: Record<
 
 /** Workspaces the user can reach, in rail order, for a given scope. */
 export function workspacesFor(scope: ScopeId | null, c: Config): WorkspaceId[] {
-  const out: WorkspaceId[] = [...servicesFor(scope, c)]
+  const out: WorkspaceId[] = []
+  if (scope === 'district' && c.districtAdmin && isAdmin(c)) out.push('overview')
+  out.push(...servicesFor(scope, c))
   if (isLearner(c)) out.push('learner')
   return out
 }
@@ -427,15 +467,18 @@ export const DEFAULT_PREFERENCES: Preferences = {
  */
 export function schoolsForService(ws: WorkspaceId, c: Config): ScopeId[] {
   if (!WORKSPACES[ws].scoped) return []
+  // The overview is the district roll-up itself, so it has exactly one home.
+  if (ws === 'overview') return c.districtAdmin && isAdmin(c) ? ['district'] : []
   return availableScopes(c).filter((s) => (servicesFor(s, c) as WorkspaceId[]).includes(ws))
 }
 
 /** Every service reachable by this user, across every school they can see. */
 export function allServices(c: Config): WorkspaceId[] {
-  const seen = new Set<WorkspaceId>()
-  for (const s of availableScopes(c)) for (const w of servicesFor(s, c)) seen.add(w)
-  if (isLearner(c)) seen.add('learner')
-  return [...seen]
+  const out: WorkspaceId[] = []
+  if (c.districtAdmin && isAdmin(c)) out.push('overview')
+  out.push(...entitledServices(c))
+  if (isLearner(c)) out.push('learner')
+  return out
 }
 
 /**
@@ -450,6 +493,8 @@ export function resolveStart(
   const scopes = availableScopes(c)
   const candidates = allServices(c)
 
+  // Without a saved choice a district admin lands on the cross-service
+  // summary rather than whichever service happens to sort first.
   const workspace =
     p.defaultService && candidates.includes(p.defaultService)
       ? p.defaultService
@@ -479,7 +524,8 @@ export function entitlementSummary(id: ScopeId, c: Config): string {
   const role = SCOPES[id].kind === 'district' ? 'District admin' : 'Admin'
   if (svc.length === 0) return role
   if (SCOPES[id].kind === 'district') {
-    return `${role} · ${svc.length} service${svc.length > 1 ? 's' : ''} across 12 schools`
+    const n = SCHOOL_IDS.length
+    return `${role} · ${svc.length} service${svc.length > 1 ? 's' : ''} across ${n} school${n > 1 ? 's' : ''}`
   }
   return `${role} · ${svc.map((s) => SERVICES[s].name).join(', ')}`
 }

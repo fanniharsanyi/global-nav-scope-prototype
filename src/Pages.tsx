@@ -4,7 +4,7 @@ import { ISearch, ISliders, IPlus } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
-  activityFor, openRequests, schoolsOffering
+  activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -16,6 +16,7 @@ type Props = {
   prefs: Preferences
   onPrefs: (p: Preferences) => void
   onDirty: () => void
+  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
 }
 
 function Card({
@@ -162,7 +163,7 @@ function WorkspaceCard({
 }
 
 export default function Pages({
-  workspace, page, scope, config, prefs, onPrefs, onDirty
+  workspace, page, scope, config, prefs, onPrefs, onDirty, onDrill
 }: Props) {
   const ws = WORKSPACES[workspace]
   const label = ws.pages.find((p) => p.id === page)?.label ?? 'Dashboard'
@@ -255,6 +256,138 @@ export default function Pages({
   }
 
   if (!scope) return null
+
+  /* The district runs several services at once, and each rolls up a different
+     set of schools. One service's dashboard cannot answer "how is the district
+     doing", so the overview reports across all of them and drills in. */
+  if (workspace === 'overview') {
+    const svcs = entitledServices(config)
+
+    if (page === 'schools') {
+      return (
+        <Card
+          title="Schools"
+          sub="Which services each school runs. The sets differ, so a service is not available everywhere."
+        >
+          <Table caption="Services run by each school in the district">
+            <Table.Head>
+              <Table.Row>
+                <Table.ColHeader id="sc-name">School</Table.ColHeader>
+                <Table.ColHeader id="sc-svc">Services</Table.ColHeader>
+                <Table.ColHeader id="sc-open">Open items</Table.ColHeader>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {SCHOOL_IDS.map((id) => (
+                <Table.Row key={id}>
+                  <Table.Cell>{SCOPES[id].name}</Table.Cell>
+                  <Table.Cell>
+                    {SCOPES[id].services.map((sv) => SERVICES[sv].name).join(', ')}
+                  </Table.Cell>
+                  <Table.Cell>
+                    {SCOPES[id].services.reduce((n, sv) => n + openRequests(id, sv), 0)}
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        </Card>
+      )
+    }
+
+    if (page === 'reports') {
+      return (
+        <Card
+          title="Reports"
+          sub="District-wide reporting. Pick a service to report on, or compare them side by side."
+        >
+          <Table caption="Open items by service across the district">
+            <Table.Head>
+              <Table.Row>
+                <Table.ColHeader id="rp-svc">Service</Table.ColHeader>
+                <Table.ColHeader id="rp-schools">Schools running it</Table.ColHeader>
+                <Table.ColHeader id="rp-where">Where</Table.ColHeader>
+                <Table.ColHeader id="rp-total">Open items</Table.ColHeader>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {svcs.map((sv) => {
+                const run = schoolsOffering(sv)
+                return (
+                  <Table.Row key={sv}>
+                    <Table.Cell>{SERVICES[sv].name}</Table.Cell>
+                    <Table.Cell>{`${run.length} of ${SCHOOL_IDS.length}`}</Table.Cell>
+                    <Table.Cell>{run.map((id) => SCOPES[id].name).join(', ')}</Table.Cell>
+                    <Table.Cell>{String(openRequests('district', sv))}</Table.Cell>
+                  </Table.Row>
+                )
+              })}
+            </Table.Body>
+          </Table>
+          <Text as="p" color="secondary" size="small">
+            Services do not roll up the same schools, so these totals cover different parts of
+            the district. Open a service from All services to see it school by school.
+          </Text>
+        </Card>
+      )
+    }
+
+    const total = svcs.reduce((n, sv) => n + openRequests('district', sv), 0)
+    return (
+      <div className="grid2">
+        <div className="col-main">
+          <Card
+            title="All services"
+            sub="Every service the district runs, with the schools rolled up to each one. Open a service to work in it."
+          >
+            <div className="svcgrid">
+              {svcs.map((sv) => {
+                const run = schoolsOffering(sv)
+                return (
+                  <div className="svccard" key={sv}>
+                    <div className="svccard__head">
+                      <h3 className="svccard__name">{SERVICES[sv].name}</h3>
+                      <span className="svccard__count">{openRequests('district', sv)}</span>
+                    </div>
+                    <p className="svccard__meta">
+                      {run.length === SCHOOL_IDS.length
+                        ? `All ${run.length} schools`
+                        : `${run.length} of ${SCHOOL_IDS.length} schools · ${run
+                            .map((id) => SCOPES[id].name)
+                            .join(', ')}`}
+                    </p>
+                    <button
+                      type="button"
+                      className="svccard__go"
+                      onClick={() => onDrill('district', sv)}
+                    >
+                      Open {SERVICES[sv].name}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        </div>
+        <div className="col-side">
+          <Card title="At a glance" sub="Bambusa District, across every service.">
+            <div className="metrics">
+              <Metric value={String(total)} label="Open items" />
+              <Metric value={String(svcs.length)} label="Services running" />
+              <Metric value={String(SCHOOL_IDS.length)} label="Schools" />
+            </div>
+          </Card>
+          <Card title="Why this page exists" sub="">
+            <Text as="p" color="secondary" size="small">
+              A district rarely runs one service. Landing you inside one of them would hide the
+              other {svcs.length - 1} and make the district look smaller than it is. This page is
+              the district, and each card drills into a service with the district still selected.
+            </Text>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   const svc = SERVICES[workspace as ServiceId]
   const where = SCOPES[scope].name
