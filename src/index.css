@@ -1378,3 +1378,41 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .ayd--slim .ayd__form { margin: 0; flex: 1 1 320px; min-width: 260px; }
 .ayd--slim .ayd__suggestions { margin: 0; justify-content: flex-start; flex: 1 1 auto; }
 .ayd--slim .ayd__suggestion { font-size: var(--fontsize-textsm); }
+
+/* ---- Services summary: one block per service, reporting its own schools ---- */
+.svcs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-md); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.svcs__item { position: relative; overflow: hidden; border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-card-lg); background: var(--background-containercolor); padding: var(--space-md); }
+.svcs__item--due { box-shadow: var(--shadow-elevation1); }
+.svcs__item--due::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px;
+  border-radius: var(--radius-card-lg) 0 0 var(--radius-card-lg); background: #cf4a00; }
+.svcs__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.svcs__lede { margin: 2px 0 var(--space-sm); }
+.svcs__sch { display: inline-flex; align-items: center; gap: 8px; }
+.svcs__dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.svcs__bar { display: inline-block; vertical-align: middle; width: 56px; height: 6px; margin-right: 10px;
+  border-radius: 999px; background: color-mix(in srgb, var(--nav-border-color) 70%, transparent); overflow: hidden; }
+.svcs__bar > span { display: block; height: 100%; border-radius: 999px; background: var(--text-link-color); }
+.svcs__num { font-variant-numeric: tabular-nums; font-weight: var(--fontweight-body-strong); }
+.svcs__foot { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top: 1px solid var(--nav-border-color); }
+.svcs [class*='-table'] { font-size: var(--fontsize-textsm); }
+@media (max-width: 1100px) { .svcs { grid-template-columns: 1fr; } }
+
+/* strip no longer stacks its own margin on top of the panel rhythm */
+.ayd--slim { margin-bottom: 0; flex-wrap: nowrap; }
+.ayd--slim .ayd__suggestions { flex-wrap: wrap; flex: 1 1 0; min-width: 0; }
+
+/* services summary: fix header wrap, name wrap and ragged card bottoms */
+.svcs__item { display: flex; flex-direction: column; }
+.svcs__foot { margin-top: auto; }
+.svcs__bar { width: 40px; margin-right: 8px; }
+.svcs [class*='-table'] th { white-space: nowrap; }
+.svcs__sch { align-items: flex-start; }
+.svcs__dot { margin-top: 5px; }
+.ayd--slim .ayd__suggestions { flex-wrap: nowrap; }
+.ayd--slim .ayd__suggestion { white-space: nowrap; }
+
+/* slim AI: input on one row, the three prompts on a second, neither clipped */
+.ayd--slim { flex-wrap: wrap; row-gap: var(--space-xs); padding: var(--space-sm) var(--space-md) 10px; }
+.ayd--slim .ayd__form { flex: 1 1 100%; min-width: 0; }
+.ayd--slim .ayd__suggestions { flex: 1 1 100%; flex-wrap: nowrap; overflow: visible; }

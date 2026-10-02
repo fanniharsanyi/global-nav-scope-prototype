@@ -9,7 +9,7 @@ import {
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
   activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
   DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, awaitingFulfilment, DIPLOMA_QUEUE,
-  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups, districtAttention, type ServiceRollup
+  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups, districtAttention, type ServiceRollup, SERVICE_METRIC
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -360,6 +360,108 @@ function ServiceCards({
 }
 
 
+/**
+ * The manager's brief, taken literally: a summary of every service this
+ * district runs, each one reporting the schools that actually roll up to it --
+ * because that set differs per service and there is nowhere else to see it --
+ * and each one drilling into the service itself.
+ */
+function ServiceSummaries({
+  rows,
+  onDrill
+}: {
+  rows: ServiceRollup[]
+  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
+}) {
+  return (
+    <ul className="svcs">
+      {rows.map((r) => {
+        const m = SERVICE_METRIC[r.id]
+        const bySchool = r.schools
+          .map((s) => ({ id: s, name: SCOPES[s].name, value: m.of(s) }))
+          .sort((a, b) => b.value - a.value)
+        const top = Math.max(...bySchool.map((b) => b.value), 1)
+        return (
+          <li className={`svcs__item${r.attention ? ' svcs__item--due' : ''}`} key={r.id}>
+            <div className="svcs__head">
+              <Heading level="h4" as="h3">
+                <Link isWithinText={false} onClick={() => onDrill('district', r.id)}>
+                  {r.name}
+                </Link>
+              </Heading>
+              <Pill
+                color={r.attention ? 'warning' : 'primary'}
+                renderIcon={r.attention ? <IconWarningSolid /> : undefined}
+              >
+                {r.attention ? 'Needs attention' : 'All clear'}
+              </Pill>
+            </div>
+
+            <div className="att__body svcs__lede">
+              <span className="att__lede">
+                <Text as="p" weight="bold" lineHeight="condensed">
+                  {r.value} {r.label}
+                </Text>
+              </span>
+              <Text as="p" size="small" color="secondary">
+                {r.schools.length === r.offered
+                  ? `Across ${r.schools.length} ${r.schools.length === 1 ? 'school' : 'schools'}`
+                  : `Across ${r.schools.length} of ${r.offered} schools`}
+                {r.attention ? ` \u00b7 oldest has waited ${r.waitingDays} days` : ''}
+              </Text>
+            </div>
+
+            <Table caption={<ScreenReaderContent>{r.name} by school</ScreenReaderContent>} layout="auto">
+              <Table.Head>
+                <Table.Row>
+                  <Table.ColHeader id={`${r.id}-sch`}>School</Table.ColHeader>
+                  <Table.ColHeader id={`${r.id}-val`} textAlign="end">
+                    {r.label[0].toUpperCase() + r.label.slice(1)}
+                  </Table.ColHeader>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
+                {bySchool.map((b) => (
+                  <Table.Row key={b.id}>
+                    <Table.Cell header scope="row">
+                      <span className="svcs__sch">
+                        <span
+                          className="svcs__dot"
+                          aria-hidden="true"
+                          style={{ background: SCHOOL_COLOR[b.id] }}
+                        />
+                        {b.name}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell textAlign="end">
+                      <span className="svcs__bar" aria-hidden="true">
+                        <span style={{ width: `${Math.round((b.value / top) * 100)}%` }} />
+                      </span>
+                      <span className="svcs__num">{b.value}</span>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+
+            <div className="svcs__foot">
+              <Link
+                isWithinText={false}
+                onClick={() => onDrill('district', r.id)}
+                renderIcon={<IconArrowOpenEndSolid />}
+                iconPlacement="end"
+              >
+                Open {r.name}
+              </Link>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+
 function Crest({ id }: { id: ScopeId }) {
   return (
     <span className="srt__crest" aria-hidden="true">
@@ -672,9 +774,9 @@ function DistrictOverview({
                 <button type="submit" className="ayd__send" aria-label="Ask"><span aria-hidden="true">↑</span></button>
               </form>
               <ul className="ayd__suggestions">
-                {['Which school has the most unfulfilled orders?',
-                  'How is order volume split across the network?',
-                  "Is anyone's access going unused?"].map((q) => (
+                {['Most unfulfilled orders',
+                  'Order volume by school',
+                  'Unused access'].map((q) => (
                   <li key={q}><button type="button" className="ayd__suggestion">{q}</button></li>
                 ))}
               </ul>
@@ -683,38 +785,7 @@ function DistrictOverview({
               title="Your services"
               sub={`${rollups.length} services · each one covers its own set of schools`}
             >
-              <ServiceCards rows={rollups} onDrill={onDrill} />
-            </Panel>
-            <Panel title="Reports" sub="Cross-service reporting, covering every service this district runs">
-              <List isUnstyled delimiter="solid" itemSpacing="small">
-                {[['Order fulfilment and open orders', 'Transcript Services', 'transcript'],
-                  ['Issue events', 'Diploma Services', 'diploma'],
-                  ['New applications', 'Dual Enrollment', 'dualEnrollment'],
-                  ['Waiting to download', 'Receive', 'receive'],
-              ['Documents in transit', 'Send', 'send'],
-              ['Badges issued', 'Badges & Certificates', 'badges'],
-              ['Verification turnaround', 'Credential Verification', 'verify']].map(([t, s, id]) => (
-                  <List.Item key={t}>
-                    <Flex alignItems="center" gap="small">
-                      <Flex.Item shouldGrow shouldShrink>
-                        <div className="att__body">
-                          <span className="att__lede">
-                            <Text as="p" weight="bold" lineHeight="condensed">{t}</Text>
-                          </span>
-                          <Text as="p" size="small" color="secondary">{s}</Text>
-                        </div>
-                      </Flex.Item>
-                      <Flex.Item>
-                        <Link isWithinText={false} onClick={() => onDrill('district', id as WorkspaceId)}
-                          renderIcon={<IconArrowOpenEndSolid />} iconPlacement="end">
-                          Open<ScreenReaderContent> {t}</ScreenReaderContent>
-                        </Link>
-                      </Flex.Item>
-                    </Flex>
-                  </List.Item>
-                ))}
-              </List>
-              <Foot label="All reports" onClick={() => onDrill('district', 'transcript')} />
+              <ServiceSummaries rows={rollups} onDrill={onDrill} />
             </Panel>
     </>
         ) : (
