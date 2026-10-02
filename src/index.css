@@ -1340,18 +1340,21 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .svcc__lab { font-size: 0.875rem; }
 
 /* The loud state. Everything above stays identical; only the weight moves. */
-.svcc--due { border-color: #c87415; box-shadow: var(--shadow-elevation1); }
+.svcc--due { box-shadow: var(--shadow-elevation1); }
 .svcc--due::before {
   content: '';
   position: absolute;
   inset: -1px auto -1px -1px;
   width: 4px;
-  border-radius: var(--radius-card-sm) 0 0 var(--radius-card-sm);
-  background: #c87415;
+  border-radius: var(--radius-card-lg) 0 0 var(--radius-card-lg);
+  background: #cf4a00;
 }
-[data-ui-dark='true'] .svcc--due { border-color: #6b5324; }
 [data-ui-dark='true'] .svcc--due::before { background: #e0a94f; }
-.att__ico { display: block; line-height: 1; padding-top: 2px; }
+.att__ico { display: block; line-height: 1; padding-top: 1px; }
+/* InstUI's Text ships 14-16px paragraph margins and has no margin prop, which
+   left the icon floating 13px above its own sentence. */
+.att__body p { margin: 0; }
+.att__body .att__lede + p { margin-top: 3px; }
 /* InstUI components hardcode light-theme text colours; the dashboard's dark
    mode is a token layer over them. Pin the pieces that would otherwise go
    dark-on-dark to the same token the rest of the page uses. */

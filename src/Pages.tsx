@@ -253,6 +253,7 @@ function AttentionBand({
           </Text>
         </Flex.Item>
         <Flex.Item shouldShrink>
+          <div className="att__body">
           <span className="att__lede">
             <Text as="p" weight="bold" lineHeight="condensed">
               Nothing is waiting on you
@@ -261,7 +262,8 @@ function AttentionBand({
           <Text as="p" size="small" color="secondary">
             Every service in this district is clear for the schools you have selected.
           </Text>
-        </Flex.Item>
+        </div>
+              </Flex.Item>
       </Flex>
     )
   }
@@ -278,6 +280,7 @@ function AttentionBand({
               </span>
             </Flex.Item>
             <Flex.Item shouldGrow shouldShrink>
+              <div className="att__body">
               <span className="att__lede">
                 <Text as="p" weight="bold" lineHeight="condensed">
                   {r.phrase}
@@ -287,7 +290,8 @@ function AttentionBand({
                 {r.name} · {r.schools.map((id) => SCOPES[id].name).join(', ')} · oldest has waited{' '}
                 {r.waitingDays} days
               </Text>
-            </Flex.Item>
+            </div>
+              </Flex.Item>
             <Flex.Item align="start">
               <Link
                 isWithinText={false}
