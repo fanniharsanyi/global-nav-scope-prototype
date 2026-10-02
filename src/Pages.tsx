@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Table, Text, View } from '@instructure/ui'
 import { ISearch, ISliders, IPlus } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
-  activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS
+  activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
+  DISTRICT_USERS
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -162,6 +163,165 @@ function WorkspaceCard({
   )
 }
 
+/**
+ * The district roll-up. A district runs several services at once and each one
+ * pulls in a different set of schools, so this answers "how is the district
+ * doing" before asking you to pick a service. The schools filter is here
+ * because a roll-up across every school is often not the question: a district
+ * admin usually wants two of them side by side.
+ */
+function DistrictOverview({
+  svcs,
+  onDrill
+}: {
+  svcs: ServiceId[]
+  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
+}) {
+  const [picked, setPicked] = useState<ScopeId[]>([...SCHOOL_IDS])
+  const [note, setNote] = useState('')
+  const all = picked.length === SCHOOL_IDS.length
+
+  function toggle(id: ScopeId) {
+    const next = picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]
+    if (next.length === 0) {
+      setNote('At least one school has to stay selected.')
+      return
+    }
+    setPicked(next)
+    setNote(
+      next.length === SCHOOL_IDS.length
+        ? `Showing all ${SCHOOL_IDS.length} schools.`
+        : `Showing ${next.length} of ${SCHOOL_IDS.length} schools: ${next
+            .map((x) => SCOPES[x].name)
+            .join(', ')}.`
+    )
+  }
+
+  // Each service only counts the picked schools that actually run it, so a
+  // service nobody selected drops to zero rather than silently showing the
+  // district total.
+  const rows = useMemo(
+    () =>
+      svcs.map((sv) => {
+        const run = schoolsOffering(sv)
+        const inView = run.filter((id) => picked.includes(id))
+        return {
+          sv,
+          run,
+          inView,
+          open: inView.reduce((n, id) => n + openRequests(id, sv), 0)
+        }
+      }),
+    [svcs, picked]
+  )
+
+  const total = rows.reduce((n, r) => n + r.open, 0)
+  const live = rows.filter((r) => r.inView.length > 0).length
+
+  return (
+    <div className="grid2">
+      <div className="col-main">
+        <Card
+          title="All services"
+          sub="Every service the district runs, with the schools rolled up to each one. Open a service to work in it."
+        >
+          <fieldset className="schfilter">
+            <legend className="schfilter__legend">Schools</legend>
+            {SCHOOL_IDS.map((id) => (
+              <label key={id} className="schfilter__chip">
+                <input
+                  type="checkbox"
+                  checked={picked.includes(id)}
+                  onChange={() => toggle(id)}
+                />
+                <span>{SCOPES[id].name}</span>
+              </label>
+            ))}
+            <span className="schfilter__count">
+              {all ? `All ${SCHOOL_IDS.length} schools` : `${picked.length} of ${SCHOOL_IDS.length}`}
+            </span>
+          </fieldset>
+          <div className="visually-hidden" role="status" data-dist-live>
+            {note}
+          </div>
+
+          <div className="svcgrid">
+            {rows.map(({ sv, run, inView, open }) => (
+              <div
+                className={`svccard${inView.length === 0 ? ' svccard--off' : ''}`}
+                key={sv}
+              >
+                <div className="svccard__head">
+                  <h3 className="svccard__name">{SERVICES[sv].name}</h3>
+                  <span className="svccard__count">{open}</span>
+                </div>
+                <p className="svccard__meta">
+                  {inView.length === 0
+                    ? `Not run by ${picked.length === 1 ? 'that school' : 'any of the selected schools'}`
+                    : run.length === SCHOOL_IDS.length && all
+                      ? `All ${run.length} schools`
+                      : `${inView.length} of ${picked.length} selected · ${inView
+                          .map((id) => SCOPES[id].name)
+                          .join(', ')}`}
+                </p>
+                <button
+                  type="button"
+                  className="svccard__go"
+                  onClick={() => onDrill('district', sv)}
+                >
+                  Open {SERVICES[sv].name}
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="col-side">
+        <Card
+          title="Your network"
+          sub={all ? 'Bambusa District, across every service.' : 'Limited to the schools you selected.'}
+        >
+          <div className="metrics">
+            <Metric value={String(total)} label="Open items" />
+            <Metric value={String(live)} label="Services in use" />
+            <Metric value={String(picked.length)} label="Schools" />
+          </div>
+        </Card>
+
+        <Card title="District users" sub={`${DISTRICT_USERS.total} other people manage this district.`}>
+          <ul className="dusers">
+            <li className="dusers__row">
+              <span className="dusers__n">{DISTRICT_USERS.active}</span>
+              <span className="dusers__t">
+                active
+                <span className="dusers__s">Signed in within 30 days</span>
+              </span>
+            </li>
+            <li className="dusers__row dusers__row--warn">
+              <span className="dusers__n">{DISTRICT_USERS.dormant}</span>
+              <span className="dusers__t">
+                not signed in
+                <span className="dusers__s">
+                  {`No activity for ${DISTRICT_USERS.dormantDays} days. Worth reviewing.`}
+                </span>
+              </span>
+            </li>
+          </ul>
+        </Card>
+
+        <Card title="Why this page exists" sub="">
+          <Text as="p" color="secondary" size="small">
+            A district rarely runs one service. Landing you inside one of them would hide the
+            other {svcs.length - 1} and make the district look smaller than it is. This page is
+            the district, and each card drills into a service with the district still selected.
+          </Text>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 export default function Pages({
   workspace, page, scope, config, prefs, onPrefs, onDirty, onDrill
 }: Props) {
@@ -265,33 +425,110 @@ export default function Pages({
 
     if (page === 'schools') {
       return (
-        <Card
-          title="Schools"
-          sub="Which services each school runs. The sets differ, so a service is not available everywhere."
-        >
-          <Table caption="Services run by each school in the district">
-            <Table.Head>
-              <Table.Row>
-                <Table.ColHeader id="sc-name">School</Table.ColHeader>
-                <Table.ColHeader id="sc-svc">Services</Table.ColHeader>
-                <Table.ColHeader id="sc-open">Open items</Table.ColHeader>
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {SCHOOL_IDS.map((id) => (
-                <Table.Row key={id}>
-                  <Table.Cell>{SCOPES[id].name}</Table.Cell>
-                  <Table.Cell>
-                    {SCOPES[id].services.map((sv) => SERVICES[sv].name).join(', ')}
-                  </Table.Cell>
-                  <Table.Cell>
-                    {SCOPES[id].services.reduce((n, sv) => n + openRequests(id, sv), 0)}
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        </Card>
+        <div className="grid2">
+          <div className="col-main">
+            <Card
+              title="Schools in this district"
+              sub={`Every school you administer, and the services each one uses. ${SCHOOL_IDS.length} schools across ${svcs.length} services.`}
+            >
+              <Table caption="Schools in this district and the services each one uses">
+                <Table.Head>
+                  <Table.Row>
+                    <Table.ColHeader id="sc-name">School</Table.ColHeader>
+                    <Table.ColHeader id="sc-loc">Location</Table.ColHeader>
+                    <Table.ColHeader id="sc-svc">Services</Table.ColHeader>
+                    <Table.ColHeader id="sc-open">Open items</Table.ColHeader>
+                  </Table.Row>
+                </Table.Head>
+                <Table.Body>
+                  {SCHOOL_IDS.map((id) => (
+                    <Table.Row key={id}>
+                      <Table.Cell>
+                        <span className="schcell">
+                          <span className="schcell__name">{SCOPES[id].name}</span>
+                          <span className="schcell__meta">{SCOPES[id].detail}</span>
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>{SCOPES[id].location}</Table.Cell>
+                      <Table.Cell>
+                        <span className="tagrow">
+                          {SCOPES[id].services.map((sv) => (
+                            <span className="tagpill" key={sv}>
+                              {SERVICES[sv].name}
+                            </span>
+                          ))}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {String(
+                          SCOPES[id].services.reduce((n, sv) => n + openRequests(id, sv), 0)
+                        )}
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </Card>
+          </div>
+          <div className="col-side">
+            <Card
+              title="Add a school"
+              sub="Connect another school to this district and choose which services it uses."
+            >
+              <button type="button" className="svccard__go">
+                Add a school
+              </button>
+            </Card>
+          </div>
+        </div>
+      )
+    }
+
+    if (page === 'settings') {
+      return (
+        <div className="grid2">
+          <div className="col-main">
+            <Card
+              title="District settings"
+              sub="Settings that apply to the district as a whole. Anything service-specific lives inside that service."
+            >
+              <Table caption="District-level settings">
+                <Table.Head>
+                  <Table.Row>
+                    <Table.ColHeader id="ds-name">Setting</Table.ColHeader>
+                    <Table.ColHeader id="ds-val">Applies to</Table.ColHeader>
+                  </Table.Row>
+                </Table.Head>
+                <Table.Body>
+                  <Table.Row>
+                    <Table.Cell>District name and branding</Table.Cell>
+                    <Table.Cell>{`All ${SCHOOL_IDS.length} schools`}</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Who can administer the district</Table.Cell>
+                    <Table.Cell>{`${DISTRICT_USERS.total} people`}</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Which services each school may use</Table.Cell>
+                    <Table.Cell>{`${svcs.length} services`}</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Single sign-on</Table.Cell>
+                    <Table.Cell>{`All ${SCHOOL_IDS.length} schools`}</Table.Cell>
+                  </Table.Row>
+                </Table.Body>
+              </Table>
+            </Card>
+          </div>
+          <div className="col-side">
+            <Card title="Not here" sub="">
+              <Text as="p" color="secondary" size="small">
+                Order rules, storefronts and fulfilment settings belong to a service, not the
+                district. Open a service from All services to reach them.
+              </Text>
+            </Card>
+          </div>
+        </div>
       )
     }
 
@@ -332,61 +569,7 @@ export default function Pages({
       )
     }
 
-    const total = svcs.reduce((n, sv) => n + openRequests('district', sv), 0)
-    return (
-      <div className="grid2">
-        <div className="col-main">
-          <Card
-            title="All services"
-            sub="Every service the district runs, with the schools rolled up to each one. Open a service to work in it."
-          >
-            <div className="svcgrid">
-              {svcs.map((sv) => {
-                const run = schoolsOffering(sv)
-                return (
-                  <div className="svccard" key={sv}>
-                    <div className="svccard__head">
-                      <h3 className="svccard__name">{SERVICES[sv].name}</h3>
-                      <span className="svccard__count">{openRequests('district', sv)}</span>
-                    </div>
-                    <p className="svccard__meta">
-                      {run.length === SCHOOL_IDS.length
-                        ? `All ${run.length} schools`
-                        : `${run.length} of ${SCHOOL_IDS.length} schools · ${run
-                            .map((id) => SCOPES[id].name)
-                            .join(', ')}`}
-                    </p>
-                    <button
-                      type="button"
-                      className="svccard__go"
-                      onClick={() => onDrill('district', sv)}
-                    >
-                      Open {SERVICES[sv].name}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          </Card>
-        </div>
-        <div className="col-side">
-          <Card title="At a glance" sub="Bambusa District, across every service.">
-            <div className="metrics">
-              <Metric value={String(total)} label="Open items" />
-              <Metric value={String(svcs.length)} label="Services running" />
-              <Metric value={String(SCHOOL_IDS.length)} label="Schools" />
-            </div>
-          </Card>
-          <Card title="Why this page exists" sub="">
-            <Text as="p" color="secondary" size="small">
-              A district rarely runs one service. Landing you inside one of them would hide the
-              other {svcs.length - 1} and make the district look smaller than it is. This page is
-              the district, and each card drills into a service with the district still selected.
-            </Text>
-          </Card>
-        </div>
-      </div>
-    )
+    return <DistrictOverview svcs={svcs} onDrill={onDrill} />
   }
 
   const svc = SERVICES[workspace as ServiceId]

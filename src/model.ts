@@ -52,6 +52,7 @@ export type Scope = {
   name: string
   kind: 'district' | 'school'
   detail: string
+  location: string
   services: ServiceId[]
 }
 
@@ -71,6 +72,7 @@ export const SCOPES: Record<ScopeId, Scope> = {
     name: 'Bambusa District',
     kind: 'district',
     detail: '3 schools · Denver, Colorado',
+    location: 'Denver, Colorado',
     // Filled below from the union of the schools, so a district can never
     // claim a service none of its schools actually run.
     services: []
@@ -80,6 +82,7 @@ export const SCOPES: Record<ScopeId, Scope> = {
     name: 'Bambusa University',
     kind: 'school',
     detail: '4-year private · 18,400 learners',
+    location: 'Denver, Colorado',
     services: ['transcript', 'diploma', 'dualEnrollment', 'receive', 'send', 'verify']
   },
   panda: {
@@ -87,6 +90,7 @@ export const SCOPES: Record<ScopeId, Scope> = {
     name: 'Panda High School',
     kind: 'school',
     detail: 'Secondary · 1,260 learners',
+    location: 'Portland, Oregon',
     services: ['transcript', 'diploma', 'receive', 'badges']
   },
   meridian: {
@@ -94,6 +98,7 @@ export const SCOPES: Record<ScopeId, Scope> = {
     name: 'Meridian Community College',
     kind: 'school',
     detail: '2-year public · 9,700 learners',
+    location: 'Tempe, Arizona',
     services: ['transcript', 'dualEnrollment', 'receive', 'send', 'badges']
   }
 }
@@ -296,7 +301,8 @@ export const WORKSPACES: Record<
     pages: [
       { id: 'dashboard', label: 'All services', icon: 'grid' },
       { id: 'reports', label: 'Reports', icon: 'chart' },
-      { id: 'schools', label: 'Schools', icon: 'building' }
+      { id: 'schools', label: 'Schools', icon: 'building' },
+      { id: 'settings', label: 'Settings', icon: 'settings' }
     ]
   },
   transcript: {
@@ -519,6 +525,13 @@ export function roleLabel(scope: ScopeId | null, _c: Config): string {
 }
 
 /** Short summary of what a scope grants, shown on each row of the scope dialog. */
+/**
+ * People who can administer the district. A district admin inherits other
+ * people's work, so "who else is in here, and is anyone's access going unused"
+ * is a district-level question that no single service can answer.
+ */
+export const DISTRICT_USERS = { total: 11, active: 8, dormant: 3, dormantDays: 90 }
+
 export function entitlementSummary(id: ScopeId, c: Config): string {
   const svc = servicesFor(id, c)
   const role = SCOPES[id].kind === 'district' ? 'District admin' : 'Admin'

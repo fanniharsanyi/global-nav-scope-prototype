@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import {
   Modal, Heading, CloseButton, Button, Text, View, TextInput, Alert, Checkbox
 } from '@instructure/ui'
@@ -159,14 +159,24 @@ export default function ContextModal({
 
             <fieldset className="scopeset">
               <legend className="visually-hidden">Choose a service</legend>
-              {services.map((id) => {
+              {services.map((id, i) => {
                 const w = WORKSPACES[id]
                 const on = pickedWs === id
                 const homes = schoolsForService(id, config).filter(
                   (sc) => SCOPES[sc].kind !== 'district'
                 )
+                // The roll-up is not a service, so it gets its own heading
+                // rather than sitting unlabelled at the top of the list.
+                const group =
+                  id === 'overview'
+                    ? 'District'
+                    : i === 0 || services[i - 1] === 'overview'
+                      ? 'Services'
+                      : null
                 return (
-                  <label key={id} className={`scoperow${on ? ' scoperow--on' : ''}`}>
+                  <Fragment key={id}>
+                    {group && <p className="scopeset__group">{group}</p>}
+                    <label className={`scoperow${on ? ' scoperow--on' : ''}`}>
                     <input
                       type="radio"
                       name="ctx-ws"
@@ -185,7 +195,8 @@ export default function ContextModal({
                           : `${homes.length} ${homes.length === 1 ? 'school' : 'schools'} · ${SERVICES[id as ServiceId].blurb}`}
                       </span>
                     </span>
-                  </label>
+                    </label>
+                  </Fragment>
                 )
               })}
             </fieldset>

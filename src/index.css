@@ -1025,3 +1025,92 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .svccard__go:hover { background: var(--text-link-color); color: #fff; }
 .svccard__go:focus-visible { outline: 2px solid var(--text-link-color); outline-offset: 2px; }
 [data-ui-dark='true'] .svccard { background: #232e3a; border-color: #3c4a57; }
+
+/* District overview: schools filter, users card, school table cells. */
+.schfilter {
+  border: 0;
+  margin: 0 0 var(--space-lg) 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.schfilter__legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-mutedcolor);
+}
+.schfilter__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid var(--nav-border-color);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  background: var(--background-containercolor);
+}
+.schfilter__chip:has(input:checked) {
+  border-color: var(--text-link-color);
+  background: #eef4fa;
+  font-weight: 600;
+}
+.schfilter__chip:has(input:focus-visible) {
+  outline: 2px solid var(--text-link-color);
+  outline-offset: 2px;
+}
+.schfilter__count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--text-mutedcolor);
+}
+.svccard--off { opacity: 0.55; }
+.svccard--off .svccard__count { color: var(--text-mutedcolor); }
+
+.dusers { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.dusers__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 8px;
+  background: var(--background-pagecolor);
+}
+.dusers__row--warn { background: #fdf3e3; }
+.dusers__n { font-size: 1.1rem; font-weight: 700; color: var(--heading-basecolor); }
+.dusers__t {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--heading-basecolor);
+}
+.dusers__s { font-weight: 400; font-size: 0.78rem; color: var(--text-mutedcolor); }
+
+.schcell { display: flex; flex-direction: column; }
+.schcell__name { font-weight: 600; }
+.schcell__meta { font-size: 0.78rem; color: var(--text-mutedcolor); }
+.tagrow { display: flex; flex-wrap: wrap; gap: 4px; }
+
+[data-ui-dark='true'] .schfilter__chip { background: #232e3a; border-color: #3c4a57; }
+[data-ui-dark='true'] .schfilter__chip:has(input:checked) { background: #2a3745; }
+[data-ui-dark='true'] .dusers__row { background: #2a3745; }
+[data-ui-dark='true'] .dusers__row--warn { background: #3a3426; }
+[data-ui-dark='true'] .dusers__n,
+[data-ui-dark='true'] .dusers__t { color: #f2f4f5; }
+.scopeset__group {
+  margin: var(--space-md) 0 4px 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-mutedcolor);
+}
+.scopeset__group:first-child { margin-top: 0; }
