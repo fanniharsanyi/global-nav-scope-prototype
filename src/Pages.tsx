@@ -8,8 +8,9 @@ import {
   type Config, type PageId, type Preferences, type ScopeId, type WorkspaceId,
   SCOPES, SERVICES, WORKSPACES, servicesFor, type ServiceId, quickActions,
   activityFor, openRequests, schoolsOffering, entitledServices, SCHOOL_IDS,
-  DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, awaitingFulfilment, DIPLOMA_QUEUE,
-  RECEIVE_TREND, RECEIVE_FACTS, serviceRollups, type ServiceRollup, SERVICE_METRIC
+  DISTRICT_USERS, SCHOOL_COLOR, monthlyOrders, DIPLOMA_QUEUE,
+  RECEIVE_TREND, serviceRollups, type ServiceRollup, SERVICE_METRIC,
+  SERVICE_CARD, DISTRICT_REPORTS
 } from './model'
 import WhereYouStart from './WhereYouStart'
 
@@ -429,48 +430,6 @@ function BarTable({
   )
 }
 
-/** Share of orders by school. Decorative — the table beside it carries the data. */
-function Donut({ slices, total }: { slices: { id: ScopeId; value: number }[]; total: number }) {
-  const r = 70
-  const c = 2 * Math.PI * r
-  let at = 0
-  return (
-    <svg width="186" height="186" viewBox="0 0 186 186" aria-hidden="true" focusable="false">
-      <g transform="rotate(-90 93 93)">
-        {slices.map((s) => {
-          const frac = total ? s.value / total : 0
-          const el = (
-            <circle
-              key={s.id}
-              cx="93"
-              cy="93"
-              r={r}
-              fill="none"
-              stroke={SCHOOL_COLOR[s.id] ?? '#64748b'}
-              strokeWidth="26"
-              strokeDasharray={`${c * frac} ${c}`}
-              strokeDashoffset={-c * at}
-            />
-          )
-          at += frac
-          return el
-        })}
-      </g>
-      <text
-        x="93"
-        y="93"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize="30"
-        fontWeight="700"
-        fill="var(--heading-basecolor)"
-      >
-        {total.toLocaleString()}
-      </text>
-    </svg>
-  )
-}
-
 function Spark({ data }: { data: number[] }) {
   const w = 760
   const h = 110
@@ -496,6 +455,170 @@ function Spark({ data }: { data: number[] }) {
     </svg>
   )
 }
+
+/** Change against the same day last week. A count on an oversight screen is
+ *  meaningless until you know which way it is moving. */
+function Delta({ n, moreIsBetter }: { n: number; moreIsBetter: boolean }) {
+  if (n === 0) return <span className="dlt dlt--flat">no change vs last week</span>
+  const up = n > 0
+  const good = up === moreIsBetter
+  return (
+    <span className={`dlt ${good ? 'dlt--good' : 'dlt--bad'}`}>
+      <span aria-hidden="true">{up ? '▲' : '▼'}</span>
+      {`${Math.abs(n)} ${up ? 'more' : 'fewer'} than last week`}
+    </span>
+  )
+}
+
+/** Share of the district's monthly order volume. A stacked bar rather than a
+ *  donut: people read length accurately and angle only approximately. */
+function ShareBar({ rows, total }: { rows: { id: ScopeId; value: number }[]; total: number }) {
+  return (
+    <span className="shb" aria-hidden="true">
+      {rows.map((r) => (
+        <span
+          key={r.id}
+          className="shb__seg"
+          style={{
+            width: `${(r.value / Math.max(1, total)) * 100}%`,
+            background: SCHOOL_COLOR[r.id] ?? '#64748b'
+          }}
+        />
+      ))}
+    </span>
+  )
+}
+
+/**
+ * The district dashboard body: one card per service, ordered so the longest
+ * wait is read first. Every card has the same anatomy -- what the work is, how
+ * it splits across schools, which way it is moving, and a way in -- so the
+ * admin learns the shape once and reuses it seven times.
+ */
+function ServiceDeck({
+  rows,
+  picked,
+  onDrill
+}: {
+  rows: ServiceRollup[]
+  picked: ScopeId[]
+  onDrill: (school: ScopeId, service: ServiceId) => void
+}) {
+  const orderRows = schoolsOffering('transcript')
+    .filter((id) => picked.includes(id))
+    .map((id) => ({ id, value: monthlyOrders(id, 'transcript') }))
+    .sort((a, b) => b.value - a.value)
+  const orderTotal = orderRows.reduce((n, r) => n + r.value, 0)
+
+  return (
+    <>
+      <Panel title="Order volume" sub="Across your schools · This month">
+        <div className="ovol__bar">
+          <ShareBar rows={orderRows} total={orderTotal} />
+        </div>
+        <table className="osum__table">
+          <caption className="osum__caption">Orders by school this month</caption>
+          <thead>
+            <tr>
+              <th scope="col">School</th>
+              <th scope="col" className="osum__num">Orders</th>
+              <th scope="col" className="osum__num">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderRows.map((r) => (
+              <tr key={r.id}>
+                <th scope="row" className="osum__school">
+                  <span
+                    className="osum__swatch"
+                    aria-hidden="true"
+                    style={{ background: SCHOOL_COLOR[r.id] }}
+                  />
+                  {SCOPES[r.id].name}
+                </th>
+                <td className="osum__num">{r.value.toLocaleString()}</td>
+                <td className="osum__num osum__share">
+                  {`${Math.round((r.value / Math.max(1, orderTotal)) * 100)}%`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td className="osum__num">{orderTotal.toLocaleString()}</td>
+              <td className="osum__num osum__share">100%</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div className="osum__foot">
+          <span className="osum__foot-meta">Updated 2h ago</span>
+        </div>
+      </Panel>
+
+      {rows.filter((r) => r.attention).map(card_)}
+
+      {/* Nothing is waiting in these, so they pair up and take half the height
+          each -- still visible, because a missing service reads as broken. */}
+      <div className="svk__pair">{rows.filter((r) => !r.attention).map(card_)}</div>
+    </>
+  )
+
+  function card_(r: ServiceRollup) {
+        const card = SERVICE_CARD[r.id]
+        const m = SERVICE_METRIC[r.id]
+        const bars = r.schools
+          .map((id) => ({
+            id,
+            value: m.of(id),
+            cells:
+              r.id === 'diploma'
+                ? [DIPLOMA_QUEUE[id]?.scheduled ?? 0, DIPLOMA_QUEUE[id]?.inProgress ?? 0]
+                : undefined
+          }))
+          .sort((a, b) => b.value - a.value)
+        const n = r.schools.length
+        return (
+          <Panel key={r.id} title={card.title} sub={`${r.name} · ${card.state}`}>
+            <p className="svk__head">
+              <span className="svk__age">
+                {r.attention ? (
+                  <>
+                    Oldest has waited{' '}
+                    <b className={r.waitingDays >= 7 ? 'svk__age--hot' : undefined}>
+                      {r.waitingDays} days
+                    </b>
+                  </>
+                ) : (
+                  'Nothing is waiting'
+                )}
+              </span>
+              <Delta n={card.delta} moreIsBetter={card.moreIsBetter} />
+            </p>
+            <BarTable
+              caption={`${r.value} ${r.label} across ${n} ${n === 1 ? 'school' : 'schools'}${
+                r.attention ? ', most outstanding first' : ', highest first'
+              }.`}
+              valueLabel={card.valueLabel}
+              extraCols={r.id === 'diploma' ? ['Scheduled', 'In progress'] : undefined}
+              rows={bars}
+            />
+            {r.id === 'receive' && (
+              <div className="srol__trend">
+                <Spark data={RECEIVE_TREND} />
+                <p className="srol__trend-note">
+                  Documents received per day, last 14 days. Between {Math.min(...RECEIVE_TREND)} and{' '}
+                  {Math.max(...RECEIVE_TREND)} a day, ending on{' '}
+                  {RECEIVE_TREND[RECEIVE_TREND.length - 1]}. The two dips are weekends.
+                </p>
+              </div>
+            )}
+            <Foot label={card.link} onClick={() => onDrill('district', r.id)} />
+          </Panel>
+        )
+  }
+}
+
 
 /**
  * The district roll-up. A district runs several services at once and each one
@@ -533,35 +656,8 @@ function DistrictOverview({
 
   const inView = (sv: ServiceId) => schoolsOffering(sv).filter((id) => picked.includes(id))
 
-  const orderRows = useMemo(
-    () =>
-      inView('transcript')
-        .map((id) => ({ id, value: monthlyOrders(id, 'transcript') }))
-        .sort((a, b) => b.value - a.value),
-    [picked]
-  )
-  const orderTotal = orderRows.reduce((n, r) => n + r.value, 0)
 
-  const openRows = inView('transcript')
-    .map((id) => ({ id, value: awaitingFulfilment(id, 'transcript') }))
-    .sort((a, b) => b.value - a.value)
-  const openTotal = openRows.reduce((n, r) => n + r.value, 0)
 
-  const diplomaRows = inView('diploma')
-    .map((id) => ({
-      id,
-      value: openRequests(id, 'diploma'),
-      cells: [DIPLOMA_QUEUE[id]?.scheduled ?? 0, DIPLOMA_QUEUE[id]?.inProgress ?? 0]
-    }))
-    .sort((a, b) => b.value - a.value)
-  const diplomaTotal = diplomaRows.reduce((n, r) => n + r.value, 0)
-
-  const dualRows = inView('dualEnrollment')
-    .map((id) => ({ id, value: Math.max(1, Math.round(openRequests(id, 'dualEnrollment') / 24)) }))
-    .sort((a, b) => b.value - a.value)
-  const dualTotal = dualRows.reduce((n, r) => n + r.value, 0)
-
-  const receiveSchools = inView('receive')
   const servicesInUse = svcs.filter((sv) => inView(sv).length > 0).length
   const rollups = useMemo(() => serviceRollups(svcs, picked), [svcs, picked])
   // Age is the only figure that means the same thing in every service, so it
@@ -744,156 +840,7 @@ function DistrictOverview({
             <div className="visually-hidden" role="status" data-dist-live>
               {note}
             </div>
-            <Panel
-              title="Where things stand"
-              sub={`${due.length} of ${rollups.length} services need you · longest wait first`}
-            >
-              <ServiceTable rows={due} onDrill={onDrill} />
-              {calm.length > 0 && (
-                <div className="st__calm">
-                  <ToggleDetails
-                    summary={`${calm.length} services have nothing waiting: ${calm
-                      .map((r) => r.name)
-                      .join(', ')}`}
-                    fluidWidth
-                  >
-                    <ServiceTable rows={calm} quiet onDrill={onDrill} />
-                  </ToggleDetails>
-                </div>
-              )}
-            </Panel>
-            <Panel title="Order fulfillment" sub="Transcript Services · This month">
-              <div className="osum__body">
-                <div className="osum__chart">
-                  <Donut slices={orderRows} total={orderTotal} />
-                  <p className="osum__chart-note">
-                    Orders this month, across the selected schools
-                  </p>
-                </div>
-                <table className="osum__table">
-                  <caption className="osum__caption">Transcript Services orders by school</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">School</th>
-                      <th scope="col" className="osum__num">
-                        Orders
-                      </th>
-                      <th scope="col" className="osum__num">
-                        Share
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderRows.map((r) => (
-                      <tr key={r.id}>
-                        <th scope="row" className="osum__school">
-                          <span
-                            className="osum__swatch"
-                            aria-hidden="true"
-                            style={{ background: SCHOOL_COLOR[r.id] }}
-                          />
-                          {SCOPES[r.id].name}
-                        </th>
-                        <td className="osum__num">{r.value.toLocaleString()}</td>
-                        <td className="osum__num osum__share">
-                          {`${Math.round((r.value / Math.max(1, orderTotal)) * 100)}%`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <th scope="row">Total</th>
-                      <td className="osum__num">{orderTotal.toLocaleString()}</td>
-                      <td className="osum__num osum__share">100%</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-              <p className="osum__ai">
-                <span className="osum__ai-spark" aria-hidden="true">
-                  ✦
-                </span>
-                This summary is powered by IgniteAI and reflects the latest activity.
-              </p>
-              <div className="osum__foot">
-                <span className="osum__foot-meta">Updated 2h ago</span>
-                <button
-                  className="osum__foot-link"
-                  type="button"
-                  onClick={() => onDrill('district', 'transcript')}
-                >
-                  View Details <span aria-hidden="true">→</span>
-                </button>
-              </div>
-            </Panel>
-    
-            <Panel title="Open orders" sub="Transcript Services · Awaiting fulfillment">
-              <BarTable
-                caption={`${openTotal} open orders across ${openRows.length} ${openRows.length === 1 ? 'school' : 'schools'}, most outstanding first.`}
-                valueLabel="Open orders"
-                rows={openRows}
-              />
-              <Foot label="View all orders" onClick={() => onDrill('district', 'transcript')} />
-            </Panel>
-    
-            {diplomaRows.length > 0 && (
-              <Panel title="Issue events" sub="Diploma Services · Queued and in progress">
-                <BarTable
-                  caption={`${diplomaTotal} diplomas ready to issue across ${diplomaRows.length} ${diplomaRows.length === 1 ? 'school' : 'schools'}.`}
-                  valueLabel="Ready to issue"
-                  extraCols={['Scheduled', 'In progress']}
-                  rows={diplomaRows}
-                />
-                <Foot label="View issue events" onClick={() => onDrill('district', 'diploma')} />
-              </Panel>
-            )}
-    
-            {dualRows.length > 0 && (
-              <Panel title="New applications" sub="Dual Enrollment · Awaiting review">
-                <BarTable
-                  caption={`${dualTotal} applications awaiting review across ${dualRows.length} ${dualRows.length === 1 ? 'school' : 'schools'}.`}
-                  valueLabel="New applications"
-                  rows={dualRows}
-                />
-                <Foot label="Review applications" onClick={() => onDrill('district', 'dualEnrollment')} />
-              </Panel>
-            )}
-    
-            {receiveSchools.length > 0 && (
-              <Panel
-                title="Waiting to download"
-                sub={`Receive · ${receiveSchools.length} ${receiveSchools.length === 1 ? 'school' : 'schools'}`}
-              >
-                <div className="srol__trend">
-                  <Spark data={RECEIVE_TREND} />
-                  <p className="srol__trend-note">
-                    Documents received per day, last 14 days. Between{' '}
-                    {Math.min(...RECEIVE_TREND)} and {Math.max(...RECEIVE_TREND)} a day, ending on{' '}
-                    {RECEIVE_TREND[RECEIVE_TREND.length - 1]}. The two dips are weekends.
-                  </p>
-                </div>
-                <div className="srol__stats">
-                  <div className="srol__stat">
-                    <span className="srol__stat-value">{RECEIVE_FACTS.toDownload}</span>
-                    <span className="srol__stat-label">Documents to download</span>
-                    <span className="srol__stat-hint">Received but not yet viewed or downloaded.</span>
-                    <button type="button" className="btn btn--secondary">
-                      View documents
-                    </button>
-                  </div>
-                  <div className="srol__stat">
-                    <span className="srol__stat-value">{RECEIVE_FACTS.pendingZips}</span>
-                    <span className="srol__stat-label">Pending ZIP downloads</span>
-                    <span className="srol__stat-hint">Batched automatically by a workflow.</span>
-                    <button type="button" className="btn btn--secondary">
-                      Download all
-                    </button>
-                  </div>
-                </div>
-                <Foot label="View Parchment Cloud" onClick={() => onDrill('district', 'receive')} />
-              </Panel>
-            )}
+            <ServiceDeck rows={rollups} picked={picked} onDrill={onDrill} />
     </>
         )}
       </div>
@@ -913,6 +860,22 @@ function DistrictOverview({
           <p className="adash__note">Counted from the schools and services on your account.</p>
           <button type="button" className="btn btn--secondary">
             Manage schools
+          </button>
+        </Panel>
+
+        <Panel title="Reports">
+          <ul className="rpt__list">
+            {DISTRICT_REPORTS.map((r) => (
+              <li className="rpt__row" key={r.name}>
+                <button type="button" className="rpt__name">
+                  {r.name}
+                </button>
+                <span className="rpt__when">{r.when}</span>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="btn btn--secondary">
+            All reports
           </button>
         </Panel>
 

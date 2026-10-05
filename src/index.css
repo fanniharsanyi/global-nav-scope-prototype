@@ -1460,3 +1460,66 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
    than hidden -- hiding it collapses the fixed widths and breaks alignment. */
 .st__calm [class*='-table'] th[scope='col'] { color: var(--text-mutedcolor);
   font-weight: var(--fontweight-body-base); font-size: var(--fontsize-textsm); }
+
+/* ---- District dashboard: service cards ---- */
+.svk__head {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--space-sm) var(--space-lg);
+  margin: 0 0 var(--space-sm);
+  font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textbase);
+  color: var(--text-mutedcolor);
+}
+.svk__age b { color: var(--heading-basecolor); font-weight: var(--fontweight-body-strong); }
+/* A week is the point where a wait stops being normal, so that is where the
+   colour starts. Below it, "2 days" must not shout as loud as "11 days". */
+.svk__age b.svk__age--hot { color: #cf4a00; }
+
+.dlt {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fontsize-textsm);
+  font-weight: var(--fontweight-body-base);
+  white-space: nowrap;
+}
+.dlt--good { color: #136f4b; }
+.dlt--bad { color: #9a3412; }
+.dlt--flat { color: var(--text-mutedcolor); }
+
+/* Share of district volume. Lengths along one axis, which people read far more
+   reliably than angles -- and the table beside it carries the actual numbers. */
+.ovol__bar { margin: 0 0 var(--space-md); }
+.shb { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: rgb(238, 241, 244); }
+.shb__seg { height: 100%; }
+.shb__seg + .shb__seg { box-shadow: inset 1px 0 0 #fff; }
+.ovol__bar + .osum__table { width: 100%; }
+
+.rpt__list { display: flex; flex-direction: column; list-style: none; margin: 0 0 var(--space-md); padding: 0; }
+.rpt__row { padding: var(--space-sm) 0; border-bottom: 1px solid var(--nav-border-color); }
+.rpt__row:last-child { border-bottom: 0; }
+.rpt__name {
+  display: inline-block; background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--fontfamily-base); font-size: var(--fontsize-textbase);
+  font-weight: var(--fontweight-body-strong); color: var(--text-link-color);
+  text-align: left;
+}
+.rpt__name:hover { text-decoration: underline; }
+.rpt__when { display: block; margin: 2px 0 0; font-size: var(--fontsize-textsm); color: var(--text-mutedcolor); }
+
+/* Quiet services pair up: half the height, none of them missing. */
+.svk__pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
+.svk__pair .panel { margin: 0; }
+@media (max-width: 900px) { .svk__pair { grid-template-columns: 1fr; } }
+/* At half width a bar is a stub that encodes nothing. These services have
+   nothing waiting, so the number alone carries it. */
+.svk__pair .srt__bar-track { display: none; }
+.svk__pair .srt__bar-wrap { justify-content: flex-end; }
+.svk__pair .srt th[scope='col'] { white-space: nowrap; }
+
+/* On a near-black surface the light-theme status colours fall under 4.5:1. */
+[data-ui-dark='true'] .dlt--bad { color: #ff9f6e; }
+[data-ui-dark='true'] .dlt--good { color: #4ecfa0; }
+[data-ui-dark='true'] .svk__age b.svk__age--hot { color: #ff9f6e; }
+[data-ui-dark='true'] .shb { background: #33414d; }
+[data-ui-dark='true'] .shb__seg + .shb__seg { box-shadow: inset 1px 0 0 #1d262e; }
+[data-ui-contrast='true'] .dlt--bad { color: #8a2c00; }
+[data-ui-contrast='true'] .dlt--good { color: #0a5236; }

@@ -773,3 +773,88 @@ export function quickActions(scope: ScopeId, service: ServiceId): QuickAction[] 
     ...w.rest
   ]
 }
+
+/**
+ * Card copy for the district dashboard. Each service gets one card, titled by
+ * the work rather than the product name -- a district admin scans for "what is
+ * stuck", not for a catalogue. `delta` is the change against the same day last
+ * week: a raw count has no meaning on an oversight screen until you know which
+ * way it is moving.
+ */
+export type ServiceCard = {
+  title: string
+  state: string
+  valueLabel: string
+  link: string
+  delta: number
+  /** Queues getting longer is bad; throughput going up is good. Without this
+   *  the same arrow would mean opposite things on adjacent cards. */
+  moreIsBetter: boolean
+}
+
+export const SERVICE_CARD: Record<ServiceId, ServiceCard> = {
+  diploma: {
+    title: 'Issue events',
+    state: 'Queued and in progress',
+    valueLabel: 'Ready to issue',
+    link: 'View issue events',
+    delta: 34,
+    moreIsBetter: false
+  },
+  verify: {
+    title: 'Verification requests',
+    state: 'Awaiting a response',
+    valueLabel: 'Pending checks',
+    link: 'View requests',
+    delta: 12,
+    moreIsBetter: false
+  },
+  transcript: {
+    title: 'Open orders',
+    state: 'Awaiting fulfillment',
+    valueLabel: 'Open orders',
+    link: 'View all orders',
+    delta: -5,
+    moreIsBetter: false
+  },
+  dualEnrollment: {
+    title: 'New applications',
+    state: 'Awaiting review',
+    valueLabel: 'New applications',
+    link: 'Review applications',
+    delta: 3,
+    moreIsBetter: false
+  },
+  receive: {
+    title: 'Waiting to download',
+    state: 'Received, not yet opened',
+    valueLabel: 'To download',
+    link: 'View Parchment Cloud',
+    delta: -2,
+    moreIsBetter: false
+  },
+  send: {
+    title: 'Documents in transit',
+    state: 'On their way to recipients',
+    valueLabel: 'In transit',
+    link: 'Track deliveries',
+    delta: 4,
+    moreIsBetter: true
+  },
+  badges: {
+    title: 'Badges issued',
+    state: 'This term',
+    valueLabel: 'Issued this term',
+    link: 'View badges',
+    delta: 61,
+    moreIsBetter: true
+  }
+}
+
+/** Saved reports a district admin runs for the board. Pointer only -- report
+ *  generation is a nav section, not dashboard content. */
+export const DISTRICT_REPORTS = [
+  { name: 'Fulfillment by school', when: 'Run 3 days ago' },
+  { name: 'Diploma issuance, term to date', when: 'Scheduled, Mondays' },
+  { name: 'Dual enrollment participation', when: 'Run 2 weeks ago' }
+]
