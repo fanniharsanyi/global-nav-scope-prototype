@@ -116,6 +116,7 @@ export type Config = {
   hasCanvas: boolean
   hasMastery: boolean
   idVerification: boolean
+  onboarding: boolean
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -125,7 +126,8 @@ export const DEFAULT_CONFIG: Config = {
   multiService: true,
   hasCanvas: false,
   hasMastery: false,
-  idVerification: true
+  idVerification: true,
+  onboarding: false
 }
 
 export const isAdmin = (c: Config) => c.shape !== 'learnerOnly'
@@ -857,4 +859,75 @@ export const DISTRICT_REPORTS = [
   { name: 'Fulfillment by school', when: 'Run 3 days ago' },
   { name: 'Diploma issuance, term to date', when: 'Scheduled, Mondays' },
   { name: 'Dual enrollment participation', when: 'Run 2 weeks ago' }
+]
+
+export type ProductId = 'parchment' | 'mastery' | 'canvas'
+
+export type Product = {
+  id: ProductId
+  name: string
+  description: string
+  /** False for anything that is a separate Instructure app, not a Parchment surface. */
+  here: boolean
+}
+
+export const PRODUCTS: Record<ProductId, Product> = {
+  parchment: {
+    id: 'parchment',
+    name: 'Parchment',
+    description: 'Credentials, transcripts, and academic records.',
+    here: true
+  },
+  mastery: {
+    id: 'mastery',
+    name: 'Mastery',
+    description: 'Standards-based assessment and mastery tracking.',
+    here: false
+  },
+  canvas: {
+    id: 'canvas',
+    name: 'Canvas',
+    description: 'Courses, assignments, and coursework.',
+    here: false
+  }
+}
+
+/** Product is the outermost scope axis: product, then service, then school. */
+export function productsFor(c: Config): Product[] {
+  const ids: ProductId[] = ['parchment']
+  if (c.hasMastery) ids.push('mastery')
+  if (c.hasCanvas) ids.push('canvas')
+  return ids.map((id) => PRODUCTS[id])
+}
+
+/* ---- New-user walkthrough ----------------------------------------------
+   Ken's tour has two steps because he has two switchers. Ours has three
+   because the third is the dashboard, not a second control. */
+export type TourStep = { id: string; target: string; title: string; body: string }
+
+export const TOUR_STEPS: TourStep[] = [
+  {
+    id: 'scope',
+    target: '[data-tour="scope"]',
+    title: 'One control says where you are',
+    body:
+      'Service and school are both set here, together. Whatever this reads is what every page, ' +
+      'search result and report below it belongs to.'
+  },
+  {
+    id: 'services',
+    target: '[data-tour="services"]',
+    title: 'Services are the navigation',
+    body:
+      'The rail lists the services you administer in the scope above. Changing scope changes ' +
+      'this list, so the nav never offers you something you cannot reach.'
+  },
+  {
+    id: 'rollup',
+    target: '[data-tour="rollup"]',
+    title: 'Each service reports separately',
+    body:
+      'A district rolls its schools up per service, because the schools differ by service. ' +
+      'Open a card to drill into the one you came for.'
+  }
 ]

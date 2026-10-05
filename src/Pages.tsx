@@ -172,14 +172,16 @@ function WorkspaceCard({
 function Panel({
   title,
   sub,
+  tour,
   children
 }: {
   title: string
   sub?: string
+  tour?: string
   children: ReactNode
 }) {
   return (
-    <section className="panel">
+    <section className="panel" data-tour={tour}>
       <header className="panel__header">
         <div className="panel__heading">
           <h2 className="panel__title">{title}</h2>
@@ -556,15 +558,15 @@ function ServiceDeck({
         </div>
       </Panel>
 
-      {rows.filter((r) => r.attention).map(card_)}
+      {rows.filter((r) => r.attention).map((r, n) => card_(r, n === 0))}
 
       {/* Nothing is waiting in these, so they pair up and take half the height
           each -- still visible, because a missing service reads as broken. */}
-      <div className="svk__pair">{rows.filter((r) => !r.attention).map(card_)}</div>
+      <div className="svk__pair">{rows.filter((r) => !r.attention).map((r) => card_(r))}</div>
     </>
   )
 
-  function card_(r: ServiceRollup) {
+  function card_(r: ServiceRollup, first = false) {
         const card = SERVICE_CARD[r.id]
         const m = SERVICE_METRIC[r.id]
         const bars = r.schools
@@ -579,7 +581,12 @@ function ServiceDeck({
           .sort((a, b) => b.value - a.value)
         const n = r.schools.length
         return (
-          <Panel key={r.id} title={card.title} sub={`${r.name} · ${card.state}`}>
+          <Panel
+            key={r.id}
+            title={card.title}
+            sub={`${r.name} · ${card.state}`}
+            tour={first ? 'rollup' : undefined}
+          >
             <p className="svk__head">
               <span className="svk__age">
                 {r.attention ? (

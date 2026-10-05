@@ -8,6 +8,12 @@ for (const s of await p.locator('button[role=switch]').all())
   if (await s.getAttribute('aria-checked') === 'false') await s.click()
 await p.locator('button', { hasText: /continue/i }).last().click()
 await p.waitForTimeout(700)
+// product picker: present only when the demo account has Mastery/Canvas
+if (await p.locator('.prod__btn').count()) {
+  await p.locator('.prod__btn').first().click(); await p.waitForTimeout(900)
+}
+// the walkthrough blocks clicks, so dismiss it before auditing
+if (await p.locator('.tour').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(400) }
 
 const scopeCount = async () => p.locator('input[name="ctx-scope"]').count()
 await p.locator('.gnav__institution--ctx').click(); await p.waitForTimeout(400)

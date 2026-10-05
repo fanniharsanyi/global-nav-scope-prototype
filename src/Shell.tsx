@@ -17,6 +17,7 @@ import ContextModal from './ContextModal'
 import Pages from './Pages'
 import Crest from './Crest'
 import BrowserChrome from './BrowserChrome'
+import Tour from './Tour'
 
 /** Pages that belong to the person, not to a school or a service. */
 const ACCOUNT_PAGES: Record<string, string | undefined> = {
@@ -65,6 +66,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const [page, setPage] = useState<PageId>(pagesFor(start.workspace)[0].id)
   const [subNavOpen, setSubNavOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(config.onboarding)
   const [dirty, setDirty] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   // 'success' = something changed here. 'info' = you are about to leave.
@@ -181,6 +183,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               <button
                 type="button"
                 className="gnav__institution gnav__institution--switch gnav__institution--ctx"
+                data-tour="scope"
                 ref={scopeTrigger}
                 title={`${ws.scoped ? scopeName : 'Parchment'} — ${ws.name} — change school or service`}
                 aria-label={`School: ${ws.scoped ? scopeName : 'Parchment'}. Service: ${ws.name}. Change school or service`}
@@ -191,7 +194,9 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 {railContext}
               </button>
             ) : (
-              <div className="gnav__institution gnav__institution--ctx">{railContext}</div>
+              <div className="gnav__institution gnav__institution--ctx" data-tour="scope">
+                {railContext}
+              </div>
             )}
 
             <button
@@ -218,7 +223,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               )}
             </button>
 
-            <ul className="gnav__items">
+            <ul className="gnav__items" data-tour="services">
               {items.map((i) => {
                 const Icon = ICONS[i.icon] ?? IDashboard
                 const active = page === i.id
@@ -573,6 +578,8 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
             onApply={applyContext}
           />
         )}
+
+        {tourOpen && <Tour onDone={() => setTourOpen(false)} />}
       </div>
     </BrowserChrome>
   )

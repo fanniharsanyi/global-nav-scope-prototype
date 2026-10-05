@@ -4,6 +4,12 @@ const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
 await p.goto('http://localhost:5177/global-nav-scope-prototype/')
 await p.locator('button', { hasText: /continue/i }).last().click()
 await p.waitForTimeout(600)
+// product picker: present only when the demo account has Mastery/Canvas
+if (await p.locator('.prod__btn').count()) {
+  await p.locator('.prod__btn').first().click(); await p.waitForTimeout(900)
+}
+// the walkthrough blocks clicks, so dismiss it before auditing
+if (await p.locator('.tour').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(400) }
 
 // open the context modal
 await p.locator('.gnav__institution--ctx').click()

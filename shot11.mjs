@@ -44,6 +44,12 @@ await p.locator('.gnav__logout').click()
 await p.waitForTimeout(400)
 await p.locator('button', { hasText: /continue/i }).last().click()
 await p.waitForTimeout(700)
+// product picker: present only when the demo account has Mastery/Canvas
+if (await p.locator('.prod__btn').count()) {
+  await p.locator('.prod__btn').first().click(); await p.waitForTimeout(900)
+}
+// the walkthrough blocks clicks, so dismiss it before auditing
+if (await p.locator('.tour').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(400) }
 const after = await ctxText()
 console.log('3. after sign out/in:', after)
 console.log('   PERSISTED (want true):', after === saved)

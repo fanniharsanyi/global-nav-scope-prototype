@@ -1523,3 +1523,95 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 [data-ui-dark='true'] .shb__seg + .shb__seg { box-shadow: inset 1px 0 0 #1d262e; }
 [data-ui-contrast='true'] .dlt--bad { color: #8a2c00; }
 [data-ui-contrast='true'] .dlt--good { color: #0a5236; }
+
+/* ---- Sign-in: product picker (product is the outermost scope axis) ---- */
+.signin__inner--wide { max-width: 620px; }
+.prod { list-style: none; margin: var(--space-lg) 0 var(--space-md); padding: 0; display: grid; gap: var(--space-md); }
+.prod__btn {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  grid-template-areas: 'mark name' 'mark desc' 'mark away';
+  align-items: center;
+  column-gap: var(--space-md); row-gap: 2px;
+  width: 100%; padding: var(--space-md); cursor: pointer; text-align: left;
+  background: var(--background-containercolor);
+  border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-card-sm);
+  font-family: var(--fontfamily-base);
+}
+.prod__btn:hover { border-color: var(--text-link-color); background: rgb(246, 249, 252); }
+.prod__mark { grid-area: mark; display: flex; align-items: center; justify-content: center; }
+.prod__name {
+  grid-area: name; font-family: var(--fontfamily-heading);
+  font-size: var(--fontsize-textbase); font-weight: var(--fontweight-heading-strong);
+  color: var(--heading-basecolor);
+}
+.prod__desc { grid-area: desc; font-size: var(--fontsize-textsm); color: var(--text-mutedcolor); }
+/* Said in words, because "this one leaves Parchment" must not rely on the icon. */
+.prod__away { grid-area: away; font-size: var(--fontsize-textsm); color: var(--text-link-color); }
+.prod__away--here { color: var(--text-mutedcolor); }
+.signin__back {
+  background: none; border: 0; padding: var(--space-xs) 0; cursor: pointer;
+  font-family: var(--fontfamily-base); font-size: var(--fontsize-textbase);
+  color: var(--text-link-color);
+}
+.signin__back:hover { text-decoration: underline; }
+.signin__title:focus-visible { outline: 2px solid var(--text-link-color); outline-offset: 4px; }
+[data-ui-dark='true'] .prod__btn:hover { background: #22303c; }
+
+/* ---- New-user walkthrough ---------------------------------------------- */
+.tour { position: fixed; inset: 0; z-index: 100; overflow: hidden; pointer-events: none; }
+.tour__blocker { position: absolute; inset: 0; pointer-events: auto; }
+.tour__hole {
+  position: absolute;
+  border-radius: var(--radius-navitem);
+  box-shadow: 0 0 0 3px #0374b5, 0 0 0 9999px #0f172199;
+  transition: top 0.16s ease, left 0.16s ease, width 0.16s ease, height 0.16s ease;
+}
+.tour__pop {
+  position: absolute;
+  display: flex; flex-direction: column; gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--background-containercolor);
+  border-radius: var(--radius-card-lg);
+  box-shadow: 0 16px 40px #0f172147;
+  pointer-events: auto;
+}
+.tour__pop:focus { outline: none; }
+.tour__arrow {
+  position: absolute; top: -6px; width: 14px; height: 14px; margin-left: -7px;
+  background: var(--background-containercolor); transform: rotate(45deg); border-radius: 2px;
+}
+.tour__pop--above .tour__arrow { top: auto; bottom: -6px; }
+.tour__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); }
+.tour__title {
+  margin: 0; font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong); font-size: var(--fontsize-textlg);
+  line-height: 1.25; color: var(--heading-basecolor);
+}
+.tour__close {
+  display: inline-flex; flex-shrink: 0; border: none; background: transparent;
+  padding: 2px; color: var(--text-mutedcolor); cursor: pointer; font-size: 15px;
+}
+.tour__body {
+  margin: 0; font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textbase); line-height: 1.5; color: var(--text-mutedcolor);
+}
+.tour__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+  padding-top: var(--space-md); border-top: 1px solid var(--nav-border-color);
+}
+.tour__count { font-family: var(--fontfamily-base); font-size: var(--fontsize-textsm); color: var(--text-mutedcolor); }
+.tour__actions { display: flex; align-items: center; gap: var(--space-md); }
+.tour__back {
+  border: none; background: transparent; padding: var(--space-xs);
+  font-family: var(--fontfamily-base); font-weight: var(--fontweight-body-strong);
+  font-size: var(--fontsize-textbase); color: var(--text-link-color); cursor: pointer;
+}
+.tour__back:hover { text-decoration: underline; }
+.tour__close:focus-visible, .tour__back:focus-visible { outline: 2px solid #0374b5; outline-offset: 2px; }
+/* The spotlight ring is the only thing marking the target, so it has to hold
+   up when the page behind it is already dark. */
+[data-ui-dark='true'] .tour__hole { box-shadow: 0 0 0 3px #7fc4ec, 0 0 0 9999px #000000b3; }
+[data-ui-contrast='true'] .tour__hole { box-shadow: 0 0 0 4px #0b4f7c, 0 0 0 9999px #0f1721cc; }
+@media (prefers-reduced-motion: reduce) { .tour__hole { transition: none; } }
