@@ -346,12 +346,14 @@ function BarTable({
   caption,
   valueLabel,
   rows,
-  extraCols
+  extraCols,
+  drill
 }: {
   caption: string
   valueLabel: string
   rows: { id: ScopeId; value: number; cells?: number[] }[]
   extraCols?: string[]
+  drill?: { service: string; onPick: (school: ScopeId) => void }
 }) {
   const max = Math.max(...rows.map((r) => r.value), 1)
   const total = rows.reduce((n, r) => n + r.value, 0)
@@ -381,12 +383,50 @@ function BarTable({
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.id}>
+          <tr key={r.id} className={drill ? 'srt__row--drill' : undefined}>
             <th scope="row">
               <span className="srt__school">
                 <Crest id={r.id} />
                 <span className="srt__school-text">
-                  <span className="srt__school-name">{SCOPES[r.id].name}</span>
+                  {drill ? (
+                    // A button, not an anchor: this changes app scope rather
+                    // than visiting a URL, and claiming to be a link we cannot
+                    // open in a new tab would be a lie. The hit area is
+                    // stretched over this cell only -- stretching it over the
+                    // whole row makes screen readers read every number in the
+                    // row as part of the link name.
+                    <button
+                      type="button"
+                      className="srt__drill"
+                      onClick={() => drill.onPick(r.id)}
+                    >
+                      <span className="srt__school-name">{SCOPES[r.id].name}</span>
+                      <span className="srt__sr">
+                        {' '}
+                        — open {drill.service} for this school
+                      </span>
+                      {/* Secondary cue only. NN/g rate a bare arrow "the least
+                          favorable approach", so it sits on top of real link
+                          styling rather than carrying the signal alone. */}
+                      <svg
+                        className="srt__chev"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path
+                          d="M6 3.5 10.5 8 6 12.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span className="srt__school-name">{SCOPES[r.id].name}</span>
+                  )}
                 </span>
               </span>
             </th>
@@ -605,10 +645,11 @@ function ServiceDeck({
             <BarTable
               caption={`${r.value} ${r.label} across ${n} ${n === 1 ? 'school' : 'schools'}${
                 r.attention ? ', most outstanding first' : ', highest first'
-              }.`}
+              }. Pick a school to open ${r.name} for it.`}
               valueLabel={card.valueLabel}
               extraCols={r.id === 'diploma' ? ['Scheduled', 'In progress'] : undefined}
               rows={bars}
+              drill={{ service: r.name, onPick: (school) => onDrill(school, r.id) }}
             />
             {r.id === 'receive' && (
               <div className="srol__trend">

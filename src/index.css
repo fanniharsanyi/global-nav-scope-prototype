@@ -1615,3 +1615,57 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 [data-ui-dark='true'] .tour__hole { box-shadow: 0 0 0 3px #7fc4ec, 0 0 0 9999px #000000b3; }
 [data-ui-contrast='true'] .tour__hole { box-shadow: 0 0 0 4px #0b4f7c, 0 0 0 9999px #0f1721cc; }
 @media (prefers-reduced-motion: reduce) { .tour__hole { transition: none; } }
+
+/* ---- Drill-down rows in a service panel -------------------------------
+   Research verdict (NN/g, Roselli, WAI-ARIA APG, Polaris, Atlassian): do not
+   make the <tr> itself clickable. A row has no interactive role, and a link
+   stretched across one reads every cell in the row as part of its name --
+   Roselli measured 25 seconds of NVDA speech before the word "link". So the
+   control is a real button in the row header, and its hit area is stretched
+   over that cell only. The Total row in <tfoot> is deliberately left inert. */
+.srt__row--drill th[scope='row'] { position: relative; }
+
+/* inline, not inline-flex: on a name that wraps to two lines a flex chevron
+   centres itself vertically and floats away from the text. Inline keeps it
+   tucked after the last word where it belongs. */
+.srt__drill {
+  display: inline;
+  background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; text-align: left; cursor: pointer;
+  color: var(--text-link-color);
+}
+/* Persistent, not hover-only. NN/g: "Never make users rely on scrubbing the
+   screen with the mouse to determine if a text is clickable." */
+.srt__drill .srt__school-name {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--text-link-color) 40%, transparent);
+  text-underline-offset: 3px;
+  color: inherit;
+}
+.srt__drill::after { content: ''; position: absolute; inset: 0; }
+.srt__chev {
+  display: inline-block; width: 14px; height: 14px;
+  vertical-align: -2px; margin-left: 5px;
+  opacity: .75; transition: transform .12s ease;
+}
+
+.srt__drill:hover .srt__school-name { text-decoration-color: currentColor; }
+.srt__drill:hover .srt__chev { transform: translateX(2px); }
+
+/* Hover and focus get the same row treatment -- SC 1.4.13 and keyboard parity. */
+.srt__row--drill:hover > th, .srt__row--drill:hover > td,
+.srt__row--drill:focus-within > th, .srt__row--drill:focus-within > td {
+  background: color-mix(in srgb, var(--text-link-color) 6%, transparent);
+}
+.srt__drill:focus-visible { outline: 2px solid #0374b5; outline-offset: 3px; border-radius: 3px; }
+
+/* The accessible-name suffix: present for screen readers, never painted. */
+.srt__sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .srt__chev { transition: none; }
+  .srt__drill:hover .srt__chev { transform: none; }
+}
