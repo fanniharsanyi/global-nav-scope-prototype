@@ -2640,3 +2640,58 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   background: linear-gradient(180deg, #a259c6 0%, #0d8e9e 100%);
   color: #fff;
 }
+
+/* --- A service across the district: a detail page of the overview --------- */
+.dsd__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--space-md);
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--text-link-color);
+  font: inherit;
+  font-size: var(--fontsize-textsm);
+  cursor: pointer;
+}
+.dsd__back:hover { text-decoration: underline; }
+.dsd__back:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.dsd__note {
+  margin: var(--space-md) 0 0;
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+.dsd__schools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dsd__schools li { display: inline-flex; }
+.dsd__schools button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--nav-border-color);
+  border-radius: 999px;
+  background: var(--background-containercolor);
+  color: inherit;
+  font: inherit;
+  font-size: var(--fontsize-textsm);
+  cursor: pointer;
+}
+.dsd__schools button:hover { border-color: var(--text-link-color); }
+.dsd__schools button:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+.dsd__schools b { font-weight: var(--fontweight-body-strong); }
+.dsd__dot { width: 8px; height: 8px; border-radius: 50%; }

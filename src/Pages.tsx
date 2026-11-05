@@ -229,11 +229,11 @@ const SHORT_SCHOOL: Record<string, string> = {
 function ServiceTable({
   rows,
   quiet,
-  onDrill
+  onDetail
 }: {
   rows: ServiceRollup[]
   quiet?: boolean
-  onDrill: (scope: ScopeId, workspace: WorkspaceId) => void
+  onDetail: (service: ServiceId) => void
 }) {
   return (
     <Table
@@ -304,7 +304,7 @@ function ServiceTable({
                 <span className="st__go">
                   <Link
                     isWithinText={false}
-                    onClick={() => onDrill('district', r.id)}
+                    onClick={() => onDetail(r.id)}
                     renderIcon={<IconArrowOpenEndSolid />}
                     iconPlacement="end"
                   >
@@ -598,11 +598,13 @@ function Donut({
 function ServiceDeck({
   rows,
   picked,
-  onDrill
+  onDrill,
+  onDetail
 }: {
   rows: ServiceRollup[]
   picked: ScopeId[]
   onDrill: (school: ScopeId, service: ServiceId) => void
+  onDetail: (service: ServiceId) => void
 }) {
   const orderRows = schoolsOffering('transcript')
     .filter((id) => picked.includes(id))
@@ -726,7 +728,7 @@ function ServiceDeck({
                 </p>
               </div>
             )}
-            <Foot label={card.link} onClick={() => onDrill('district', r.id)} />
+            <Foot label={card.link} onClick={() => onDetail(r.id)} />
           </Panel>
         )
   }
@@ -739,6 +741,64 @@ function ServiceDeck({
  * before asking you to pick one. The schools filter is here because a roll-up
  * across every school is often not the question.
  */
+/**
+ * A service seen across the whole district. This lives inside the district
+ * overview on purpose: the control above keeps saying "District overview /
+ * All schools", because that is still where you are. Opening one school from
+ * here is the move that changes scope.
+ */
+function DistrictServiceDetail({
+  service,
+  onBack,
+  onOpenAt
+}: {
+  service: ServiceId
+  onBack: () => void
+  onOpenAt: (school: ScopeId) => void
+}) {
+  const svc = SERVICES[service]
+  const run = schoolsOffering(service)
+  return (
+    <div className="dsd">
+      <button type="button" className="dsd__back" onClick={onBack}>
+        <span aria-hidden="true">←</span> District overview
+      </button>
+      <Card
+        title={`${svc.name} across your district`}
+        sub={
+          run.length === SCHOOL_IDS.length
+            ? `Every school in the district runs ${svc.name}.`
+            : `${run.length} of ${SCHOOL_IDS.length} schools run ${svc.name}. The rest are not counted here.`
+        }
+      >
+        <ScopedTable scope="district" service={service} />
+        <p className="dsd__note">
+          This is a district roll-up. To work on {svc.name} you open it at one school — use the
+          control above, or pick a school below.
+        </p>
+        <ul className="dsd__schools">
+          {run.map((id) => (
+            <li key={id}>
+              <button type="button" onClick={() => onOpenAt(id)}>
+                <span
+                  className="dsd__dot"
+                  style={{ background: SCHOOL_COLOR[id] }}
+                  aria-hidden="true"
+                />
+                {SCOPES[id].name}
+                <b>{openRequests(id, service)}</b>
+                <ScreenReaderContent>
+                  open {svc.name} at {SCOPES[id].name}
+                </ScreenReaderContent>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </div>
+  )
+}
+
 function DistrictOverview({
   svcs,
   onDrill
@@ -749,7 +809,9 @@ function DistrictOverview({
   const [picked, setPicked] = useState<ScopeId[]>([...SCHOOL_IDS])
   const [openFilter, setOpenFilter] = useState(false)
   const [note, setNote] = useState('')
+  const [detail, setDetail] = useState<ServiceId | null>(null)
   const all = picked.length === SCHOOL_IDS.length
+
 
   function toggle(id: ScopeId) {
     const next = picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]
@@ -780,6 +842,18 @@ function DistrictOverview({
     [rollups]
   )
   const calm = useMemo(() => rollups.filter((r) => !r.attention), [rollups])
+  // Opening a service from here is a detail page *of the district dashboard*,
+  // not a trip into the service. A service is always worked at one school, so
+  // sending you into Diploma Services while the control still said "All
+  // schools" described a place that does not exist.
+  if (detail)
+    return (
+      <DistrictServiceDetail
+        service={detail}
+        onBack={() => setDetail(null)}
+        onOpenAt={(school) => onDrill(school, detail)}
+      />
+    )
   const dense = new URLSearchParams(window.location.search).has('dense')
 
   return (
@@ -847,7 +921,7 @@ function DistrictOverview({
               title="Where things stand"
               sub={`${due.length} of ${rollups.length} services need you · longest wait first`}
             >
-              <ServiceTable rows={due} onDrill={onDrill} />
+              <ServiceTable rows={due} onDetail={setDetail} />
               {calm.length > 0 && (
                 <div className="st__calm">
                   <ToggleDetails
@@ -856,7 +930,7 @@ function DistrictOverview({
                       .join(', ')}`}
                     fluidWidth
                   >
-                    <ServiceTable rows={calm} quiet onDrill={onDrill} />
+                    <ServiceTable rows={calm} quiet onDetail={setDetail} />
                   </ToggleDetails>
                 </div>
               )}
@@ -953,7 +1027,7 @@ function DistrictOverview({
             <div className="visually-hidden" role="status" data-dist-live>
               {note}
             </div>
-            <ServiceDeck rows={rollups} picked={picked} onDrill={onDrill} />
+            <ServiceDeck rows={rollups} picked={picked} onDrill={onDrill} onDetail={setDetail} />
     </>
         )}
       </div>
