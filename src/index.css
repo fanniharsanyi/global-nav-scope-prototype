@@ -2069,3 +2069,21 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   top: -3px;
   right: -3px;
 }
+
+/* The scope switcher sits with the account card at the foot, so it carries the
+   auto margin that used to pin the card, and the two read as one block. */
+.gnav__items--foot {
+  margin-top: auto;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--nav-border-color);
+}
+.gnav__account {
+  margin-top: 0;
+}
+.gnav__item--switch {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}

@@ -310,6 +310,27 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               </>
             )}
 
+            {canChangeContext && (
+              <ul className="gnav__items gnav__items--foot">
+                <li>
+                  <button
+                    type="button"
+                    className="gnav__item gnav__item--switch"
+                    aria-haspopup="dialog"
+                    aria-label="Change school or service"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    <span className="gnav__iconwrap">
+                      <IUpDown />
+                    </span>
+                    {railOpen && (
+                      <span className="gnav__item-label">Change school or service</span>
+                    )}
+                  </button>
+                </li>
+              </ul>
+            )}
+
             <button
               type="button"
               ref={accountBtn}
