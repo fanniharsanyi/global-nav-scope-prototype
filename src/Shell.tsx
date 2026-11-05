@@ -249,7 +249,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
             {products.length > 0 && (
               <>
                 <div className="gnav__grouprule" role="presentation" />
-                <h2 className={railOpen ? 'gnav__grouplabel' : 'sr'} id="other-products">
+                <h2 className="gnav__grouplabel" id="other-products">
                   Other products
                 </h2>
                 <ul className="gnav__items gnav__items--products" aria-labelledby="other-products">

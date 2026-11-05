@@ -2257,3 +2257,151 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   min-height: 44px;
   align-items: center;
 }
+
+/* ---- steady geometry across collapse ----
+   flex-direction, justify-content and align-items are not animatable, so every
+   one of them flipping on the class change made the contents teleport at t=0
+   while the rail was still easing for another 300ms. InstUI keeps the same
+   arrangement in both states and lets width and padding carry the change. */
+.gnav__rail {
+  align-items: stretch;
+  padding: 0 6px;
+}
+.gnav--expanded .gnav__rail {
+  padding: 0 var(--space-sm);
+}
+.gnav__items {
+  align-items: stretch;
+}
+.gnav__item {
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-md);
+  padding: 4px 10px;
+  height: 44px;
+}
+.gnav--expanded .gnav__item {
+  padding: 4px var(--nav-item-h-padding);
+}
+.gnav__iconwrap {
+  height: 24px;
+}
+/* The head keeps one row and simply wraps when the rail gets too narrow for
+   the mark and the collapse control side by side — the wrap happens partway
+   through the width animation rather than on the first frame. */
+.gnav__head {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm) 0;
+  padding: var(--space-md) 6px;
+}
+.gnav--expanded .gnav__head {
+  padding: var(--space-md) var(--nav-item-h-padding);
+}
+.gnav__product-lockup {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.gnav__account {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-navitem);
+}
+.gnav--expanded .gnav__account {
+  padding: var(--space-sm);
+  border-color: var(--nav-border-color);
+}
+.gnav:not(.gnav--expanded) .gnav__account-top {
+  justify-content: center;
+}
+/* The group heading swapped to a visually-hidden class, which popped. Clip it
+   like the other labels so it shares the rail's timing. */
+.gnav__grouplabel {
+  overflow: hidden;
+  transition:
+    opacity 0.2s ease,
+    height 0.3s ease,
+    margin 0.3s ease;
+}
+.gnav:not(.gnav--expanded) .gnav__grouplabel {
+  opacity: 0;
+  height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.gnav--expanded .gnav__grouplabel {
+  height: 16px;
+}
+
+/* The footer stretched its children, so Apply grew to the height of the toggle
+   and its hint while Cancel — wrapped in a margin View — stayed 38px and sat
+   high. Centre them instead and keep them off the modal's bottom radius. */
+[data-cid='ModalFooter']:has(.ctx__foot) {
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+}
+[data-cid='ModalFooter']:has(.ctx__foot) > * {
+  align-self: center;
+}
+/* Wrapping is instant by nature, so ease the head's height alongside it —
+   otherwise the items below jump 36px in a single frame. */
+.gnav__head {
+  min-height: 92px;
+  transition:
+    min-height 0.3s ease,
+    padding 0.3s ease;
+}
+.gnav--expanded .gnav__head {
+  min-height: 0;
+}
+
+/* Wrapping is instant by nature, so the collapse control is taken out of flow
+   and its position eased instead — the same trick InstUI uses, where the
+   header's children transition left/top rather than re-flowing. */
+.gnav__head {
+  position: relative;
+  flex-wrap: nowrap;
+  min-height: 92px;
+  padding-right: 6px;
+}
+.gnav--expanded .gnav__head {
+  min-height: 64px;
+  padding-right: 44px;
+}
+.gnav__head .gnav__toggle {
+  position: absolute;
+  top: 48px;
+  left: 6px;
+  transition:
+    top 0.3s ease,
+    left 0.3s ease,
+    background 0.12s ease;
+}
+.gnav--expanded .gnav__head .gnav__toggle {
+  top: 12px;
+  left: calc(100% - 40px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .gnav__head,
+  .gnav__head .gnav__toggle,
+  .gnav__grouplabel {
+    transition-duration: 0.01ms;
+  }
+}
+/* Collapsed, the mark sits above the control rather than beside it — padding
+   does that job so it eases with everything else. */
+.gnav__head {
+  padding: var(--space-md) 6px 44px;
+}
+.gnav--expanded .gnav__head {
+  padding: var(--space-md) 44px var(--space-md) var(--nav-item-h-padding);
+}
