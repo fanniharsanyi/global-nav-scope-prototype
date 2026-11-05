@@ -77,6 +77,9 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const [announcement, setAnnouncement] = useState('')
   // 'success' = something changed here. 'info' = you are about to leave.
   const [announceKind, setAnnounceKind] = useState<'success' | 'info'>('success')
+  // Set only by an identity switch, so the banner can offer the way straight
+  // back instead of making people rediscover the control they just used.
+  const [undoIdentity, setUndoIdentity] = useState<'admin' | 'learner' | null>(null)
   const setPrefs = onPrefs
 
   const accountBtn = useRef<HTMLButtonElement | null>(null)
@@ -119,6 +122,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
       setWorkspace('learner')
       setPage(pagesFor('learner')[0].id)
       setAnnounceKind('success')
+      setUndoIdentity('admin')
       setAnnouncement(`Switched to your learner account, ${USER.name}.`)
     } else {
       const back = adminReturn ?? { scope: start.scope, workspace: start.workspace, page: null }
@@ -126,6 +130,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
       setWorkspace(back.workspace)
       setPage(back.page ?? pagesFor(back.workspace)[0].id)
       setAnnounceKind('success')
+      setUndoIdentity('learner')
       setAnnouncement(
         `Switched to ${roleLabel(back.scope, config)}. You are back in ${WORKSPACES[back.workspace].name}.`
       )
@@ -153,6 +158,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
       })
     }
     setAnnounceKind('success')
+    setUndoIdentity(null)
     const where = WORKSPACES[nextWs].scoped
       ? `Now in ${WORKSPACES[nextWs].name} at ${SCOPES[nextScope].name}. This tab reloaded; no new tab was opened.`
       : `Now in ${WORKSPACES[nextWs].name}. This workspace is not tied to a school.`
@@ -284,7 +290,34 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               </>
             )}
 
-            {canChangeContext && (
+            {onLearnerSide && bothIdentities ? (
+              /* A learner has no school and no service, so the scope control
+                 here would be a switch that switches nothing -- and it is the
+                 most switcher-looking thing on the screen, so it sends people
+                 hunting in the wrong place. The slot where you already learned
+                 the switcher lives carries the way back instead. */
+              <ul className="gnav__items gnav__items--foot">
+                <li>
+                  <button
+                    type="button"
+                    className="gnav__item gnav__item--switch"
+                    onClick={() => switchIdentity('admin')}
+                  >
+                    <span className="gnav__iconwrap">
+                      <IUpDown />
+                    </span>
+                    <span className="gnav__switch-text">
+                      <span className="gnav__switch-now">
+                        Back to {roleLabel(adminReturn?.scope ?? start.scope, config)}
+                      </span>
+                      <span className="gnav__switch-hint">
+                        {WORKSPACES[adminReturn?.workspace ?? start.workspace].name}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            ) : canChangeContext ? (
               <ul className="gnav__items gnav__items--foot">
                 <li>
                   <button
@@ -309,7 +342,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   </button>
                 </li>
               </ul>
-            )}
+            ) : null}
 
             <button
               type="button"
@@ -386,6 +419,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                         ref={identityBtn}
                         className="gnav__identity-trigger"
                         aria-label={`Switch account. You are signed in as ${currentRole}`}
+                        title="Switch account"
                         aria-haspopup="menu"
                         aria-expanded={identityOpen}
                         onClick={() => setIdentityOpen((v) => !v)}
@@ -590,6 +624,21 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     onDismiss={() => setAnnouncement('')}
                   >
                     {announcement}
+                    {undoIdentity && (
+                      <button
+                        type="button"
+                        className="alert__undo"
+                        onClick={() => {
+                          const to = undoIdentity
+                          setUndoIdentity(null)
+                          switchIdentity(to)
+                        }}
+                      >
+                        {undoIdentity === 'admin'
+                          ? `Back to ${roleLabel(adminReturn?.scope ?? start.scope, config)}`
+                          : 'Back to your learner account'}
+                      </button>
+                    )}
                   </Alert>
                 </View>
               )}

@@ -2484,3 +2484,27 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .ubtn--ai:hover {
   filter: brightness(1.08);
 }
+
+/* The way back from an identity switch, offered where the user is already
+   looking. Inline in the banner so it inherits the alert's live region and is
+   read out with the message rather than after it. */
+.alert__undo {
+  margin-left: var(--space-md);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--fontfamily-base);
+  font-size: inherit;
+  font-weight: var(--fontweight-body-strong);
+  color: var(--text-link-color);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.alert__undo:hover {
+  text-decoration: none;
+}
+.alert__undo:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
