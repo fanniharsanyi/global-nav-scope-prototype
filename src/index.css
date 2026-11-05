@@ -2602,6 +2602,20 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   color: var(--text-mutedcolor);
 }
 
+/* The dot inherited --button-primary-bg, which is the same navy as the glyph,
+   so it read as part of the bell instead of a badge against it. It needs its
+   own hue and the chip's corner, clear of the bell's shoulder. */
+.ubtn__dot {
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  background: var(--text-link-color);
+}
+[data-ui-contrast='true'] .ubtn__dot {
+  background: #b1001d;
+}
+
 /* "Expand to full width" is literal: the reading measure goes away. */
 .wrap__content--wide {
   max-width: none;
