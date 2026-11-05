@@ -12,7 +12,7 @@ if (await p.locator('.prod__btn').count()) {
 if (await p.locator('.tour').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(400) }
 
 // open the context modal
-await p.locator('.gnav__institution--ctx').click()
+await p.locator('.gnav__item--switch').click()
 await p.waitForTimeout(500)
 
 const live = p.locator("[data-ctx-live]")

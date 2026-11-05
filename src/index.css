@@ -2087,3 +2087,57 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   text-align: left;
   cursor: pointer;
 }
+
+/* The rail header carries the institution's own mark where InstUI carries the
+   product wordmark, so the school is the first thing read in the nav. */
+.gnav__school-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  font-family: var(--fontfamily-base);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+.gnav--expanded .gnav__head .gnav__product-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.25;
+}
+.gnav--expanded .gnav__product-lockup {
+  min-width: 0;
+}
+
+/* With the school in the header, the foot control carries the service — it is
+   the only thing left in the rail that names which service you are inside. */
+.gnav__item--switch {
+  height: auto;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  align-items: flex-start;
+}
+.gnav__switch-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+.gnav__switch-now {
+  font-family: var(--fontfamily-base);
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--heading-basecolor);
+}
+.gnav__switch-hint {
+  font-family: var(--fontfamily-base);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-mutedcolor);
+}

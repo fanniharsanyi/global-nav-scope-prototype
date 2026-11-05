@@ -16,18 +16,18 @@ if (await p.locator('.prod__btn').count()) {
 if (await p.locator('.tour').count()) { await p.keyboard.press('Escape'); await p.waitForTimeout(400) }
 
 const scopeCount = async () => p.locator('input[name="ctx-scope"]').count()
-await p.locator('.gnav__institution--ctx').click(); await p.waitForTimeout(400)
+await p.locator('.gnav__item--switch').click(); await p.waitForTimeout(400)
 const n = await scopeCount()
 await p.keyboard.press('Escape'); await p.waitForTimeout(300)
 
 for (let si = 0; si < n; si++) {
-  await p.locator('.gnav__institution--ctx').click(); await p.waitForTimeout(400)
+  await p.locator('.gnav__item--switch').click(); await p.waitForTimeout(400)
   await p.locator('input[name="ctx-scope"]').nth(si).check({ force: true }); await p.waitForTimeout(300)
   const scopeName = await p.locator('input[name="ctx-scope"]').nth(si).evaluate(x=>x.closest('label').innerText.split('\n')[0])
   const sv = await p.locator('input[name="ctx-ws"]').count()
   await p.keyboard.press('Escape'); await p.waitForTimeout(250)
   for (let wi = 0; wi < sv; wi++) {
-    await p.locator('.gnav__institution--ctx').click(); await p.waitForTimeout(400)
+    await p.locator('.gnav__item--switch').click(); await p.waitForTimeout(400)
     await p.locator('input[name="ctx-scope"]').nth(si).check({ force: true }); await p.waitForTimeout(250)
     await p.locator('input[name="ctx-ws"]').nth(wi).check({ force: true }); await p.waitForTimeout(250)
     const svcName = await p.locator('input[name="ctx-ws"]').nth(wi).evaluate(x=>x.closest('label').innerText.split('\n')[0])

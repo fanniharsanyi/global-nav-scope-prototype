@@ -9,15 +9,17 @@ async function signIn() {
   await p.locator('button', { hasText: /continue/i }).last().click()
   await p.waitForTimeout(600)
 }
+// The school now lives in the rail header and the service on the foot
+// switcher, so the scope reads across the two.
 const ctxText = async () =>
-  (await p.locator('.gnav__ctx-school').innerText()) + ' / ' +
-  (await p.locator('.gnav__ctx-service').innerText())
+  (await p.locator('.gnav__head .gnav__product-name').innerText()) + ' / ' +
+  (await p.locator('.gnav__switch-now').innerText())
 
 await signIn()
 console.log('1. fresh start:', await ctxText())
 
 // switch to a different school+service AND save it as default
-await p.locator('.gnav__institution--ctx').click()
+await p.locator('.gnav__item--switch').click()
 await p.waitForTimeout(400)
 const schools = p.locator('input[name="ctx-scope"]')
 for (let i = 0; i < await schools.count(); i++) {
@@ -55,7 +57,7 @@ console.log('3. after sign out/in:', after)
 console.log('   PERSISTED (want true):', after === saved)
 
 // the checkbox should now be disabled-as-already-default
-await p.locator('.gnav__institution--ctx').click()
+await p.locator('.gnav__item--switch').click()
 await p.waitForTimeout(400)
 const cb = p.locator('.ctx__foot input[type=checkbox]')
 console.log('4. checkbox disabled when already default (want true):', await cb.isDisabled())

@@ -10,7 +10,7 @@ import {
 import {
   type Config, type PageId, type Preferences, type ScopeId, type UiPreferences,
   type WorkspaceId,
-  SCOPES, WORKSPACES, USER, IDENTITIES, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner, isAdmin,
+  SCOPES, WORKSPACES, USER, IDENTITIES, SCHOOL_COLOR, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner, isAdmin,
   resolveStart
 } from './model'
 import ContextModal from './ContextModal'
@@ -172,25 +172,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const canChangeContext = canSwitch || workspacesFor(scope, config).length > 1
   const [railOpen, setRailOpen] = useState(true)
 
-  const railContext = (
-    <>
-      <span className="gnav__avatar gnav__avatar--rect" aria-hidden="true">
-        <Crest size={32} />
-      </span>
-      {railOpen && (
-        <span className="gnav__ctx-text">
-          <span className="gnav__ctx-school">{ws.scoped ? scopeName : 'Parchment'}</span>
-          <span className="gnav__ctx-service">{ws.name}</span>
-        </span>
-      )}
-      {canChangeContext && ws.scoped && railOpen && (
-        <span className="gnav__institution-caret">
-          <IUpDown size={18} />
-        </span>
-      )}
-    </>
-  )
-
   return (
     <BrowserChrome tabTitle={ACCOUNT_PAGES[page] ?? current?.label ?? 'Dashboard'}>
       <div
@@ -207,8 +188,23 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
           <nav className="gnav__rail" aria-label="Global">
             <div className="gnav__head">
               <span className="gnav__product-lockup">
-                <span className="gnav__product-mark" aria-hidden="true" />
-                {railOpen && <span className="gnav__product-name">Parchment</span>}
+                {ws.scoped && scope ? (
+                  <>
+                    <span
+                      className="gnav__school-mark"
+                      aria-hidden="true"
+                      style={{ background: SCHOOL_COLOR[scope] ?? '#1d354f' }}
+                    >
+                      {initials(scopeName)}
+                    </span>
+                    {railOpen && <span className="gnav__product-name">{scopeName}</span>}
+                  </>
+                ) : (
+                  <>
+                    <span className="gnav__product-mark" aria-hidden="true" />
+                    {railOpen && <span className="gnav__product-name">Parchment</span>}
+                  </>
+                )}
               </span>
               <button
                 type="button"
@@ -222,26 +218,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 </span>
               </button>
             </div>
-
-            {canChangeContext && ws.scoped ? (
-              <button
-                type="button"
-                className="gnav__institution gnav__institution--switch gnav__institution--ctx"
-                data-tour="scope"
-                ref={scopeTrigger}
-                title={`${ws.scoped ? scopeName : 'Parchment'} — ${ws.name} — change school or service`}
-                aria-label={`School: ${ws.scoped ? scopeName : 'Parchment'}. Service: ${ws.name}. Change school or service`}
-                aria-haspopup="dialog"
-                aria-expanded={modalOpen}
-                onClick={() => setModalOpen(true)}
-              >
-                {railContext}
-              </button>
-            ) : (
-              <div className="gnav__institution gnav__institution--ctx" data-tour="scope">
-                {railContext}
-              </div>
-            )}
 
             <ul className="gnav__items" data-tour="services">
               {items.map((i) => {
@@ -316,15 +292,23 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   <button
                     type="button"
                     className="gnav__item gnav__item--switch"
+                    ref={scopeTrigger}
+                    data-tour="scope"
                     aria-haspopup="dialog"
-                    aria-label="Change school or service"
+                    aria-expanded={modalOpen}
+                    aria-label={`Viewing ${ws.name}${
+                      ws.scoped ? ` for ${scopeName}` : ''
+                    }. Change school or service`}
                     onClick={() => setModalOpen(true)}
                   >
                     <span className="gnav__iconwrap">
                       <IUpDown />
                     </span>
                     {railOpen && (
-                      <span className="gnav__item-label">Change school or service</span>
+                      <span className="gnav__switch-text">
+                        <span className="gnav__switch-now">{ws.name}</span>
+                        <span className="gnav__switch-hint">Change school or service</span>
+                      </span>
                     )}
                   </button>
                 </li>
