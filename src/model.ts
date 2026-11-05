@@ -657,6 +657,13 @@ export const USER = {
  * different entitlements, so this is an identity switch, not a scope change —
  * which is why it sits in the account panel and not in the scope control.
  */
+/** Enough to make the bell tell the truth about having something in it. */
+export const NOTIFICATIONS: Array<{ id: string; text: string; when: string }> = [
+  { id: 'n1', text: '184 diplomas at Panda High School are ready to issue.', when: '2h ago' },
+  { id: 'n2', text: 'Three district users have not signed in for 90 days.', when: 'Yesterday' },
+  { id: 'n3', text: 'Fulfillment by school finished running.', when: '3 days ago' }
+]
+
 export const IDENTITIES: Array<{
   id: 'admin' | 'learner'
   label: string

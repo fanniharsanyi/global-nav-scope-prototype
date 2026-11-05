@@ -84,21 +84,49 @@ export const ISettings = (p: P) => (
 )
 
 export const IBell = (p: P) => (
-  <S {...p}>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+  <S {...p} strokeWidth={1.8}>
+    <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+    <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
   </S>
 )
 
 export const IMaximize = (p: P) => (
-  <S {...p}>
-    <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
+  <S {...p} strokeWidth={1.8}>
+    <path d="m15 15 6 6" />
+    <path d="m15 9 6-6" />
+    <path d="M21 16v5h-5" />
+    <path d="M21 8V3h-5" />
+    <path d="M3 16v5h5" />
+    <path d="m3 21 6-6" />
+    <path d="M3 8V3h5" />
+    <path d="M9 9 3 3" />
+  </S>
+)
+
+/**
+ * Adam's AI mark: a filled four-point star with a smaller one riding its top
+ * right. It is filled rather than stroked, so it holds its weight beside the
+ * stroked bell and expand icons instead of disappearing between them.
+ */
+export const ISparkle = (p: P) => (
+  <S {...p} stroke="none">
+    <path
+      d="M11.0621 2.53451C11.3843 1.66389 12.6157 1.66389 12.9379 2.53451L15.0815 8.32767C15.1828 8.60139 15.3986 8.8172 15.6723 8.91848L21.4655 11.0621C22.3361 11.3843 22.3361 12.6157 21.4655 12.9379L15.6723 15.0815C15.3986 15.1828 15.1828 15.3986 15.0815 15.6723L12.9379 21.4655C12.6157 22.3361 11.3843 22.3361 11.0621 21.4655L8.91849 15.6723C8.8172 15.3986 8.60139 15.1828 8.32767 15.0815L2.53451 12.9379C1.66389 12.6157 1.66389 11.3843 2.53451 11.0621L8.32767 8.91849C8.60139 8.8172 8.8172 8.60139 8.91848 8.32767L11.0621 2.53451Z"
+      fill="currentColor"
+    />
+    <path
+      d="M19.5311 1.26725C19.6922 0.831943 20.3078 0.831944 20.4689 1.26725L21.0804 2.91964L22.7327 3.53107C23.1681 3.69215 23.1681 4.30785 22.7327 4.46893L21.0804 5.08036L20.4689 6.73275C20.3078 7.16806 19.6922 7.16806 19.5311 6.73275L18.9196 5.08036L17.2673 4.46893C16.8319 4.30785 16.8319 3.69215 17.2673 3.53107L18.9196 2.91964L19.5311 1.26725Z"
+      fill="currentColor"
+    />
   </S>
 )
 
 export const IGrid = (p: P) => (
-  <S {...p} strokeWidth={2.4}>
-    <path d="M5 5h.01M12 5h.01M19 5h.01M5 12h.01M12 12h.01M19 12h.01M5 19h.01M12 19h.01M19 19h.01" />
+  <S {...p} stroke="none">
+    <path
+      fill="currentColor"
+      d="M3 3h5v5h-5zM10 3h5v5h-5zM17 3h5v5h-5zM3 10h5v5h-5zM10 10h5v5h-5zM17 10h5v5h-5zM3 17h5v5h-5zM10 17h5v5h-5zM17 17h5v5h-5z"
+    />
   </S>
 )
 

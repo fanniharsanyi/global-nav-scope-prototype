@@ -2524,3 +2524,85 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   font-weight: var(--fontweight-body-strong);
   color: var(--heading-basecolor);
 }
+
+/* ---- top-right chrome, to Adam's measurements ----
+   40x40, 12px radius, no chip. His buttons carry no fill until you touch
+   them, which is what lets four of them sit in a row without reading as a
+   toolbar of equal-weight actions. */
+.ubtn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #273540;
+  padding: 0;
+  position: relative;
+}
+.ubtn:hover {
+  background: #e2eaf7;
+}
+.ubtn--on {
+  background: #d5e2f6;
+}
+.ubtn__dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--button-primary-bg);
+  border: 2px solid var(--background-pagecolor);
+}
+.ubtn__anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.notif {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  z-index: 40;
+  width: 320px;
+  padding: var(--space-md);
+  background: var(--background-containercolor);
+  border: 1px solid #8d959f;
+  border-radius: 12px;
+  box-shadow: rgba(35, 68, 101, 0.1) 0 4px 8px 3px, rgba(35, 68, 101, 0.15) 0 1px 3px;
+  text-align: left;
+}
+.notif__title {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--fontfamily-heading);
+  font-size: var(--fontsize-textlg);
+  font-weight: var(--fontweight-heading-strong);
+  color: var(--heading-basecolor);
+}
+.notif__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.notif__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--nav-border-color);
+  font-family: var(--fontfamily-base);
+}
+.notif__text {
+  font-size: var(--fontsize-textbase);
+  color: var(--heading-basecolor);
+}
+.notif__when {
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+
+/* "Expand to full width" is literal: the reading measure goes away. */
+.wrap__content--wide {
+  max-width: none;
+}

@@ -3,14 +3,14 @@ import type { JSX } from 'react'
 import { View, Alert, Tooltip } from '@instructure/ui'
 import {
   IDashboard, IFile, IAward, IUsers, IInbox, IHelp, ISettings,
-  IBell, IMaximize, IGrid, IUpDown, ILogOut, IChevronsLeft,
+  IBell, IMaximize, IGrid, ISparkle, IUpDown, ILogOut, IChevronsLeft,
   IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery,
   IMoon, ITextSize, IContrast, ICheck, IX, ISliders, IWarning
 } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type UiPreferences,
   type WorkspaceId,
-  SCOPES, WORKSPACES, USER, IDENTITIES, SCHOOL_COLOR, availableScopes, workspacesFor, pagesFor, roleLabel, reachLabel, LEGACY_ROLE_NAMES, isLearner, isAdmin,
+  SCOPES, WORKSPACES, USER, IDENTITIES, NOTIFICATIONS, SCHOOL_COLOR, availableScopes, workspacesFor, pagesFor, roleLabel, reachLabel, LEGACY_ROLE_NAMES, isLearner, isAdmin,
   resolveStart
 } from './model'
 import ContextModal from './ContextModal'
@@ -193,6 +193,61 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
 
   const canChangeContext = canSwitch || workspacesFor(scope, config).length > 1
   const [railOpen, setRailOpen] = useState(true)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [wide, setWide] = useState(false)
+  const notifBtn = useRef<HTMLButtonElement | null>(null)
+  const notifWrap = useRef<HTMLDivElement | null>(null)
+
+  const closeNotif = (refocus = true) => {
+    setNotifOpen(false)
+    if (refocus) notifBtn.current?.focus()
+  }
+
+  useEffect(() => {
+    if (!notifOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeNotif()
+    }
+    const onDown = (e: MouseEvent) => {
+      if (!notifWrap.current?.contains(e.target as Node)) closeNotif(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onDown)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onDown)
+    }
+  }, [notifOpen])
+
+  // Adam's three chrome buttons all do something. Ours were decoration, which
+  // is worse than absent -- a control that answers nothing still costs a click
+  // to find that out.
+  const askAi = () => {
+    const field = document.getElementById('ayd-prompt') as HTMLInputElement | null
+    if (field) {
+      field.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      field.focus()
+      return
+    }
+    setAnnounceKind('info')
+    setUndoIdentity(null)
+    setAnnouncement('IgniteAI is on the dashboard for this service.')
+  }
+
+  const toggleWide = () => {
+    // "Expand to full width" means exactly that: drop the reading measure and
+    // fold the rail away, so the page gets the whole window.
+    const next = !wide
+    setWide(next)
+    setRailOpen(!next)
+    setAnnounceKind('info')
+    setUndoIdentity(null)
+    setAnnouncement(
+      next
+        ? 'Expanded to full width. The navigation is collapsed.'
+        : 'Back to the standard width.'
+    )
+  }
 
   return (
     <BrowserChrome tabTitle={ACCOUNT_PAGES[page] ?? current?.label ?? 'Dashboard'}>
@@ -573,7 +628,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
         </div>
 
         <div className="wrap__container">
-          <div className="wrap__content">
+          <div className={`wrap__content${wide ? ' wrap__content--wide' : ''}`}>
             <div className="wrap__topbar">
               <span className="wrap__titleblock">
                 <span className="wrap__eyebrow">{ACCOUNT_PAGES[page] ? USER.name : ws.name}</span>
@@ -590,22 +645,61 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     aria-haspopup="dialog"
                     onClick={() => canChangeContext && setModalOpen(true)}
                   >
-                    <IGrid size={22} />
+                    <IGrid size={20} />
                   </button>
                 </Tooltip>
-                <Tooltip renderTip="Ask IgniteAI">
-                  <button type="button" className="ubtn ubtn--ai" aria-label="Ask IgniteAI">
-                    <span aria-hidden="true">✦</span>
+                <Tooltip renderTip="Open AI assistant">
+                  <button
+                    type="button"
+                    className="ubtn"
+                    aria-label="Open AI assistant"
+                    onClick={askAi}
+                  >
+                    <ISparkle size={20} />
                   </button>
                 </Tooltip>
-                <Tooltip renderTip="Notifications">
-                  <button type="button" className="ubtn" aria-label="Notifications">
-                    <IBell size={22} />
-                  </button>
-                </Tooltip>
-                <Tooltip renderTip="Full screen">
-                  <button type="button" className="ubtn" aria-label="Full screen">
-                    <IMaximize size={22} />
+                <div className="ubtn__anchor" ref={notifWrap}>
+                  <Tooltip renderTip="Open notifications">
+                    <button
+                      type="button"
+                      ref={notifBtn}
+                      className={`ubtn${notifOpen ? ' ubtn--on' : ''}`}
+                      aria-label={`Open notifications, ${NOTIFICATIONS.length} unread`}
+                      aria-haspopup="dialog"
+                      aria-expanded={notifOpen}
+                      onClick={() => setNotifOpen((v) => !v)}
+                    >
+                      <IBell size={20} />
+                      <span className="ubtn__dot" aria-hidden="true" />
+                    </button>
+                  </Tooltip>
+                  {notifOpen && (
+                    <div
+                      className="notif"
+                      role="dialog"
+                      aria-label="Notifications"
+                    >
+                      <h2 className="notif__title">Notifications</h2>
+                      <ul className="notif__list">
+                        {NOTIFICATIONS.map((n) => (
+                          <li key={n.id} className="notif__item">
+                            <span className="notif__text">{n.text}</span>
+                            <span className="notif__when">{n.when}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <Tooltip renderTip={wide ? 'Back to standard width' : 'Expand to full width'}>
+                  <button
+                    type="button"
+                    className={`ubtn${wide ? ' ubtn--on' : ''}`}
+                    aria-label={wide ? 'Back to standard width' : 'Expand to full width'}
+                    aria-pressed={wide}
+                    onClick={toggleWide}
+                  >
+                    <IMaximize size={20} />
                   </button>
                 </Tooltip>
               </div>
