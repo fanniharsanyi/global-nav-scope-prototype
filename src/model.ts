@@ -666,9 +666,36 @@ export const IDENTITIES: Array<{
   { id: 'learner', label: 'Learner', hint: 'Your credentials and orders' }
 ]
 
-export function roleLabel(scope: ScopeId | null, _c: Config): string {
+/**
+ * Legacy reading: your reach is part of your title, so the district roll-up
+ * makes you a different kind of admin. Two names for one identity implies
+ * there is something to switch between, which is the question it kept
+ * provoking. Kept so both versions can be shown side by side.
+ */
+export function roleLabelLegacy(scope: ScopeId | null, _c: Config): string {
   if (!scope) return 'Learner'
   return SCOPES[scope].kind === 'district' ? 'District admin' : 'Admin'
+}
+
+/**
+ * You are an Admin. The district roll-up is not a promotion, it is a wider
+ * view, so reach is reported by the scope control and never by the role.
+ */
+export function roleLabel(scope: ScopeId | null, _c: Config): string {
+  if (!scope) return 'Learner'
+  if (LEGACY_ROLE_NAMES) return roleLabelLegacy(scope, _c)
+  return 'Admin'
+}
+
+/** `?role=legacy` restores the old two-name behaviour for comparison. */
+export const LEGACY_ROLE_NAMES =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('role') === 'legacy'
+
+/** How far the current scope reaches, said plainly. */
+export function reachLabel(scope: ScopeId | null): string {
+  if (!scope) return 'Your own record'
+  return SCOPES[scope].kind === 'district' ? 'All schools' : SCOPES[scope].name
 }
 
 /** Short summary of what a scope grants, shown on each row of the scope dialog. */
@@ -713,7 +740,7 @@ export const DISTRICT_USERS = { total: 11, active: 8, dormant: 3, dormantDays: 9
 
 export function entitlementSummary(id: ScopeId, c: Config): string {
   const svc = servicesFor(id, c)
-  const role = SCOPES[id].kind === 'district' ? 'District admin' : 'Admin'
+  const role = roleLabel(id, c)
   if (svc.length === 0) return role
   if (SCOPES[id].kind === 'district') {
     const n = SCHOOL_IDS.length

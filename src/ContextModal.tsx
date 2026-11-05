@@ -6,7 +6,7 @@ import { ISearch } from './Icons'
 import {
   type Config, type ScopeId, type ServiceId, type WorkspaceId,
   SCOPES, WORKSPACES, SERVICES, allServices, availableScopes, entitlementSummary, schoolsForService,
-  schoolsOffering, openRequests
+  schoolsOffering, openRequests, roleLabel, LEGACY_ROLE_NAMES
 } from './model'
 
 type Props = {
@@ -223,7 +223,7 @@ export default function ContextModal({
                 labelled as one, so the role looked like it changed on its own.
                 Saying the rule once here beats making people infer it from
                 three rows of meta text. */}
-            {schools.length > 1 && pickedWs !== 'overview' && (
+            {LEGACY_ROLE_NAMES && schools.length > 1 && pickedWs !== 'overview' && (
               <p className="ctx__rolehint">
                 Every school picks itself. The first row is all of them at once, which is
                 what makes you <strong>District admin</strong> instead of <strong>Admin</strong>.
@@ -267,7 +267,7 @@ export default function ContextModal({
                       </span>
                       <span className="scoperow__meta">
                         {run !== null
-                          ? `District admin · all ${run} schools that run it · ${openRequests(
+                          ? `${roleLabel(id, config)} · all ${run} schools that run it · ${openRequests(
                               'district',
                               pickedWs as ServiceId
                             )} open`

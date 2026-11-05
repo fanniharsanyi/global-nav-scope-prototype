@@ -10,7 +10,7 @@ import {
 import {
   type Config, type PageId, type Preferences, type ScopeId, type UiPreferences,
   type WorkspaceId,
-  SCOPES, WORKSPACES, USER, IDENTITIES, SCHOOL_COLOR, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner, isAdmin,
+  SCOPES, WORKSPACES, USER, IDENTITIES, SCHOOL_COLOR, availableScopes, workspacesFor, pagesFor, roleLabel, reachLabel, LEGACY_ROLE_NAMES, isLearner, isAdmin,
   resolveStart
 } from './model'
 import ContextModal from './ContextModal'
@@ -113,6 +113,10 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const onLearnerSide = workspace === 'learner'
   const bothIdentities = isAdmin(config) && isLearner(config)
   const currentRole = onLearnerSide ? 'Learner' : roleLabel(scope, config)
+  // What the scope control reports: how far this scope reaches, and what you
+  // are within it. Role lives beside its cause rather than in the account
+  // block, where it was answering a question nobody had asked there.
+  const scopeRole = `${reachLabel(scope)} · ${roleLabel(scope, config)}`
   const orgName = onLearnerSide ? 'Parchment' : scope ? SCOPES[scope].name : 'Parchment'
 
   const switchIdentity = (to: 'admin' | 'learner') => {
@@ -165,11 +169,12 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
     // them, here, is what keeps that from reading as a hidden identity switch.
     const nextRole = roleLabel(nextScope, config)
     const roleMoved = nextRole !== currentRole
-    const asWho = WORKSPACES[nextWs].scoped
-      ? roleMoved
-        ? ` You are ${nextRole} here, not ${currentRole}.`
-        : ` You are still ${nextRole} here.`
-      : ''
+    const asWho =
+      LEGACY_ROLE_NAMES && WORKSPACES[nextWs].scoped
+        ? roleMoved
+          ? ` You are ${nextRole} here, not ${currentRole}.`
+          : ` You are still ${nextRole} here.`
+        : ''
     const where = WORKSPACES[nextWs].scoped
       ? `Now in ${WORKSPACES[nextWs].name} at ${SCOPES[nextScope].name}.${asWho} This tab reloaded; no new tab was opened.`
       : `Now in ${WORKSPACES[nextWs].name}. This workspace is not tied to a school.`
@@ -348,7 +353,9 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     </span>
                     <span className="gnav__switch-text">
                       <span className="gnav__switch-now">{ws.name}</span>
-                      <span className="gnav__switch-hint">Change school or service</span>
+                      <span className="gnav__switch-hint">
+                        {ws.scoped ? scopeRole : 'Not tied to a school'}
+                      </span>
                     </span>
                   </button>
                 </li>
