@@ -2405,3 +2405,82 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 .gnav--expanded .gnav__head {
   padding: var(--space-md) 44px var(--space-md) var(--nav-item-h-padding);
 }
+
+/* ---- district dashboard, matched to Ken's ----
+   The split reads left to right: the donut is the headline, the table is the
+   record. Below 900px they stack, because a 180px figure beside a three-column
+   table leaves nothing legible. */
+.osum__count {
+  margin: 0 0 var(--space-md);
+  text-align: right;
+  font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+.osum__split {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+.osum__split .osum__table {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.dnut {
+  flex: 0 0 auto;
+  width: 200px;
+  margin: 0;
+  text-align: center;
+}
+.dnut__svg {
+  width: 180px;
+  height: 180px;
+  display: block;
+  margin: 0 auto;
+}
+.dnut__total {
+  font-family: var(--fontfamily-heading);
+  font-weight: var(--fontweight-heading-strong);
+  font-size: 30px;
+  fill: var(--heading-basecolor);
+}
+.dnut__cap {
+  margin-top: var(--space-sm);
+  font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textsm);
+  line-height: 1.35;
+  color: var(--text-mutedcolor);
+}
+.osum__ai {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-lg) 0 0;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-card-sm);
+  font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+.osum__ai-mark {
+  color: #8b5cf6;
+  font-size: 14px;
+}
+@media (max-width: 900px) {
+  .osum__split {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dnut {
+    width: auto;
+  }
+}
+.ubtn--ai {
+  background: linear-gradient(135deg, #2b7abc, #8b5cf6);
+  color: #fff;
+  font-size: 18px;
+}
+.ubtn--ai:hover {
+  filter: brightness(1.08);
+}

@@ -322,18 +322,40 @@ function ServiceTable({
 
 
 
+/**
+ * Ken gives every school a shield so a row is recognisable before it is read.
+ * We have no real crests, so the shape is shared and only the colour and the
+ * initial change -- enough to tell three schools apart, and it never carries
+ * meaning on its own because the school's name is right beside it.
+ */
 function Crest({ id }: { id: ScopeId }) {
+  const fill = SCHOOL_COLOR[id] ?? '#64748b'
   return (
     <span className="srt__crest" aria-hidden="true">
-      <span
-        style={{
-          display: 'block',
-          width: 24,
-          height: 24,
-          borderRadius: 7,
-          background: SCHOOL_COLOR[id] ?? '#64748b'
-        }}
-      />
+      <svg viewBox="0 0 28 28" width="28" height="28">
+        <path
+          d="M14 2 3.5 5.6v9.1c0 5.4 4.3 9.7 10.5 11.3 6.2-1.6 10.5-5.9 10.5-11.3V5.6Z"
+          fill={fill}
+        />
+        <path
+          d="M14 2 3.5 5.6v9.1c0 5.4 4.3 9.7 10.5 11.3 6.2-1.6 10.5-5.9 10.5-11.3V5.6Z"
+          fill="none"
+          stroke="rgba(0,0,0,.18)"
+          strokeWidth="1"
+        />
+        <text
+          x="14"
+          y="15"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill="#fff"
+          fontSize="11"
+          fontWeight="700"
+          fontFamily="var(--fontfamily-base)"
+        >
+          {SCOPES[id].name.charAt(0)}
+        </text>
+      </svg>
     </span>
   )
 }
@@ -514,22 +536,58 @@ function Delta({ n, moreIsBetter }: { n: number; moreIsBetter: boolean }) {
 
 /** Share of the district's monthly order volume. A stacked bar rather than a
  *  donut: people read length accurately and angle only approximately. */
-function ShareBar({ rows, total }: { rows: { id: ScopeId; value: number }[]; total: number }) {
+/**
+ * Ken reads the district split as a donut with the total in the middle, so the
+ * headline number and its composition are one glance rather than two. The
+ * segments carry no meaning on their own -- the table beside it is the record,
+ * and the swatches tie the two together -- so the whole figure is decorative
+ * to assistive tech.
+ */
+function Donut({
+  rows,
+  total,
+  caption
+}: {
+  rows: { id: ScopeId; value: number }[]
+  total: number
+  caption: string
+}) {
+  const R = 68
+  const W = 26
+  const C = 2 * Math.PI * R
+  let at = 0
   return (
-    <span className="shb" aria-hidden="true">
-      {rows.map((r) => (
-        <span
-          key={r.id}
-          className="shb__seg"
-          style={{
-            width: `${(r.value / Math.max(1, total)) * 100}%`,
-            background: SCHOOL_COLOR[r.id] ?? '#64748b'
-          }}
-        />
-      ))}
-    </span>
+    <figure className="dnut">
+      <svg className="dnut__svg" viewBox="0 0 180 180" role="presentation" aria-hidden="true">
+        <circle cx="90" cy="90" r={R} fill="none" stroke="var(--background-pagecolor)" strokeWidth={W} />
+        {rows.map((r) => {
+          const frac = r.value / Math.max(1, total)
+          const seg = (
+            <circle
+              key={r.id}
+              cx="90"
+              cy="90"
+              r={R}
+              fill="none"
+              stroke={SCHOOL_COLOR[r.id] ?? '#64748b'}
+              strokeWidth={W}
+              strokeDasharray={`${frac * C} ${C}`}
+              strokeDashoffset={-at * C}
+              transform="rotate(-90 90 90)"
+            />
+          )
+          at += frac
+          return seg
+        })}
+        <text className="dnut__total" x="90" y="90" textAnchor="middle" dominantBaseline="central">
+          {total.toLocaleString()}
+        </text>
+      </svg>
+      <figcaption className="dnut__cap">{caption}</figcaption>
+    </figure>
   )
 }
+
 
 /**
  * The district dashboard body: one card per service, ordered so the longest
@@ -554,10 +612,14 @@ function ServiceDeck({
 
   return (
     <>
-      <Panel title="Order volume" sub="Across your schools · This month">
-        <div className="ovol__bar">
-          <ShareBar rows={orderRows} total={orderTotal} />
-        </div>
+      <Panel title="Order fulfillment" sub="Transcript Services · This month">
+        <p className="osum__count">{`${orderRows.length} schools`}</p>
+        <div className="osum__split">
+          <Donut
+            rows={orderRows}
+            total={orderTotal}
+            caption="Orders this month, across the selected schools"
+          />
         <table className="osum__table">
           <caption className="osum__caption">Orders by school this month</caption>
           <thead>
@@ -593,9 +655,12 @@ function ServiceDeck({
             </tr>
           </tfoot>
         </table>
-        <div className="osum__foot">
-          <span className="osum__foot-meta">Updated 2h ago</span>
         </div>
+        <p className="osum__ai">
+          <span className="osum__ai-mark" aria-hidden="true">✦</span>
+          This summary is powered by IgniteAI and reflects the latest activity.
+        </p>
+        <Foot label="View Details" />
       </Panel>
 
       {rows.filter((r) => r.attention).map((r, n) => card_(r, n === 0))}
