@@ -3,7 +3,7 @@ import type { JSX } from 'react'
 import { View, Alert, Tooltip } from '@instructure/ui'
 import {
   IDashboard, IFile, IAward, IUsers, IInbox, IHelp, ISettings,
-  IBell, IMaximize, IGrid, ISparkle, IUpDown, ILogOut, IChevronsLeft,
+  IBell, IMaximize, ISparkle, IUpDown, ILogOut, IChevronsLeft,
   IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery,
   IMoon, ITextSize, IContrast, ICheck, IX, ISliders, IWarning
 } from './Icons'
@@ -637,17 +637,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 </h1>
               </span>
               <div className="wrap__actions">
-                <Tooltip renderTip="Switch school or service">
-                  <button
-                    type="button"
-                    className="ubtn"
-                    aria-label="Switch school or service"
-                    aria-haspopup="dialog"
-                    onClick={() => canChangeContext && setModalOpen(true)}
-                  >
-                    <IGrid size={20} />
-                  </button>
-                </Tooltip>
                 <Tooltip renderTip="Open AI assistant">
                   <button
                     type="button"

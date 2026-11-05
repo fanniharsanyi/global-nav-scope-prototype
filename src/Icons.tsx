@@ -121,14 +121,6 @@ export const ISparkle = (p: P) => (
   </S>
 )
 
-export const IGrid = (p: P) => (
-  <S {...p} stroke="none">
-    <path
-      fill="currentColor"
-      d="M3 3h5v5h-5zM10 3h5v5h-5zM17 3h5v5h-5zM3 10h5v5h-5zM10 10h5v5h-5zM17 10h5v5h-5zM3 17h5v5h-5zM10 17h5v5h-5zM17 17h5v5h-5z"
-    />
-  </S>
-)
 
 export const IUpDown = (p: P) => (
   <S {...p}>
