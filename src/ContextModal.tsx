@@ -233,7 +233,11 @@ export default function ContextModal({
             {schools.length > 1 && (
               <TextInput
                 renderLabel={<span className="visually-hidden">Search schools</span>}
-                placeholder="Search districts and schools"
+                placeholder={
+                  schools.some((sc) => SCOPES[sc].kind === 'district')
+                    ? 'Search districts and schools'
+                    : 'Search schools'
+                }
                 value={query}
                 onChange={(_e, v) => search(v)}
                 renderBeforeInput={<ISearch size={18} />}

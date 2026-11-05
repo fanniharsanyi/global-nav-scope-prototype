@@ -20,11 +20,11 @@ console.log('live regions (want 1):', await live.count())
 console.log('present at open, empty (want ""):', JSON.stringify((await live.first().textContent()).trim()))
 
 // type in search
-await p.getByPlaceholder(/search districts/i).fill('meri')
+await p.getByPlaceholder(/search .*schools/i).fill('meri')
 await p.waitForTimeout(300)
 console.log('after search:', JSON.stringify((await live.first().textContent()).trim()))
 
-await p.getByPlaceholder(/search districts/i).fill('')
+await p.getByPlaceholder(/search .*schools/i).fill('')
 await p.waitForTimeout(300)
 console.log('after clear:', JSON.stringify((await live.first().textContent()).trim()))
 
