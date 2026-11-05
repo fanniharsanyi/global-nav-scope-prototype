@@ -260,3 +260,11 @@ export const IX = (p: P) => (
     <path d="M18 6 6 18M6 6l12 12" />
   </S>
 )
+
+export const IWarning = (p: P) => (
+  <svg width={p.size ?? 16} height={p.size ?? 16} viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+    <path d="M12 3 4.5 6v5.5c0 4.2 3.1 7.8 7.5 9 4.4-1.2 7.5-4.8 7.5-9V6L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M12 8.2v4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M12 15.4h.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+  </svg>
+)

@@ -1828,3 +1828,153 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   gap: var(--space-sm);
   min-width: 0;
 }
+
+/* ── Account panel, matched to the InstUI global nav subnav ──
+   Values measured from the InstUI reference: panel 224px/12px padding,
+   avatar 48px ringed in #8d959f, status dot 22px #f0c16c, role pill 8px
+   radius with a #2b7abc hairline, name 16/600 over a 12px org line. */
+.gnav__panel {
+  width: 224px;
+  padding: 12px;
+  gap: 0;
+}
+.gnav__panel-title {
+  font-size: 20px;
+}
+.gnav__ident {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.gnav__ident-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.gnav__ident-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 2px solid #8d959f;
+  border-radius: 50%;
+  background: var(--nav-bg);
+  font-family: var(--fontfamily-base);
+  font-weight: 600;
+  font-size: 16px;
+  color: #2871af;
+}
+.gnav__ident-flag {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f0c16c;
+  color: #273540;
+}
+.gnav__ident-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  border: 1px solid #2b7abc;
+  border-radius: 8px;
+  background: var(--nav-bg);
+  font-family: var(--fontfamily-base);
+  font-size: 13px;
+  color: #2369a4;
+  white-space: nowrap;
+}
+.gnav__ident-namerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.gnav__ident-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.gnav__ident-name {
+  font-family: var(--fontfamily-base);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--heading-basecolor);
+}
+.gnav__ident-org {
+  font-family: var(--fontfamily-base);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--heading-basecolor);
+}
+.gnav__ident-verify {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  font-family: var(--fontfamily-base);
+  font-weight: 500;
+  font-size: 14px;
+  color: #2369a4;
+  cursor: pointer;
+}
+.gnav__ident-verify:hover {
+  text-decoration: underline;
+}
+.gnav__ident-verify:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.gnav__panel-menu {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--nav-border-color);
+}
+.gnav__panel-link {
+  min-height: 36px;
+  padding: 8px;
+}
+.gnav__panel-section {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Adam's blues are tuned for a white panel; on the dark and high-contrast
+   surfaces they drop under 4.5:1, so lift them rather than inherit. */
+[data-ui-dark='true'] .gnav__ident-pill,
+[data-ui-dark='true'] .gnav__ident-verify {
+  color: #7cb9ec;
+}
+[data-ui-dark='true'] .gnav__ident-pill {
+  border-color: #7cb9ec;
+}
+[data-ui-dark='true'] .gnav__ident-avatar {
+  color: #7cb9ec;
+}
+[data-ui-contrast='true'] .gnav__ident-pill,
+[data-ui-contrast='true'] .gnav__ident-verify,
+[data-ui-contrast='true'] .gnav__ident-avatar {
+  color: #0b4f86;
+}
+[data-ui-contrast='true'][data-ui-dark='true'] .gnav__ident-pill,
+[data-ui-contrast='true'][data-ui-dark='true'] .gnav__ident-verify,
+[data-ui-contrast='true'][data-ui-dark='true'] .gnav__ident-avatar {
+  color: #a8d4f5;
+}

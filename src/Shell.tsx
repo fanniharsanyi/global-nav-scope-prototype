@@ -3,9 +3,9 @@ import type { JSX } from 'react'
 import { View, Alert, Tooltip } from '@instructure/ui'
 import {
   IDashboard, IFile, IAward, IUsers, IInbox, IHelp, ISettings,
-  IBell, IMaximize, IUpDown, IPanelClose, ILogOut, IChevronRight,
+  IBell, IMaximize, IUpDown, IPanelClose, ILogOut,
   IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery,
-  IMoon, ITextSize, IContrast, ICheck, IX, ISliders
+  IMoon, ITextSize, IContrast, ICheck, IX, ISliders, IWarning
 } from './Icons'
 import {
   type Config, type PageId, type Preferences, type ScopeId, type UiPreferences,
@@ -110,6 +110,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const onLearnerSide = workspace === 'learner'
   const bothIdentities = isAdmin(config) && isLearner(config)
   const currentRole = onLearnerSide ? 'Learner' : roleLabel(scope, config)
+  const orgName = onLearnerSide ? 'Parchment' : scope ? SCOPES[scope].name : 'Parchment'
 
   const switchIdentity = (to: 'admin' | 'learner') => {
     setIdentityOpen(false)
@@ -378,29 +379,47 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   }
                 }}
               >
-                <div className="gnav__profile-card gnav__profile-card--static">
-                  <span className="gnav__profile-text">
-                    <span className="gnav__profile-namerow">
-                      <span className="gnav__profile-name">{USER.name}</span>
-                      {bothIdentities && (
-                        <button
-                          type="button"
-                          ref={identityBtn}
-                          className="gnav__identity-trigger"
-                          aria-label={`Switch account. You are signed in as ${currentRole}`}
-                          aria-haspopup="menu"
-                          aria-expanded={identityOpen}
-                          onClick={() => setIdentityOpen((v) => !v)}
-                        >
-                          <IUpDown size={18} />
-                        </button>
-                      )}
+                <div className="gnav__ident">
+                  <div className="gnav__ident-top">
+                    <span className="gnav__ident-avatar" aria-hidden="true">
+                      {initials(USER.name)}
+                      <span className="gnav__ident-flag">
+                        <IWarning size={14} />
+                      </span>
                     </span>
-                    <span className="gnav__profile-email">{USER.email}</span>
-                    <span className="gnav__profile-tags">
-                      <span className="gnav__profile-badge">{currentRole}</span>
+                    <span className="sr">Verification needed</span>
+                    <span className="gnav__ident-pill">{currentRole}</span>
+                  </div>
+                  <div className="gnav__ident-namerow">
+                    <span className="gnav__ident-text">
+                      <span className="gnav__ident-name">{USER.name}</span>
+                      <span className="gnav__ident-org">{orgName}</span>
                     </span>
-                  </span>
+                    {bothIdentities && (
+                      <button
+                        type="button"
+                        ref={identityBtn}
+                        className="gnav__identity-trigger"
+                        aria-label={`Switch account. You are signed in as ${currentRole}`}
+                        aria-haspopup="menu"
+                        aria-expanded={identityOpen}
+                        onClick={() => setIdentityOpen((v) => !v)}
+                      >
+                        <IUpDown size={18} />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="gnav__ident-verify"
+                    onClick={() => {
+                      setAnnounceKind('info')
+                      setAnnouncement('Reverifying your account would start here.')
+                    }}
+                  >
+                    Reverify account
+                    <IWarning size={14} />
+                  </button>
                 </div>
 
                 {identityOpen && (
@@ -441,40 +460,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   </div>
                 )}
               </div>
-
-              {scope && (
-                <div>
-                  <p className="gnav__panel-section-title">Where you are working</p>
-                  {canSwitch ? (
-                    <button
-                      type="button"
-                      className="gnav__scope-switch"
-                      onClick={() => setModalOpen(true)}
-                    >
-                      <span>
-                        <span className="gnav__institution-eyebrow">
-                          {ws.name}
-                        </span>
-                        <span className="gnav__institution-name" style={{ display: 'block' }}>
-                          {ws.scoped ? SCOPES[scope].name : 'Not tied to a school'}
-                        </span>
-                      </span>
-                      <IChevronRight size={18} />
-                    </button>
-                  ) : (
-                    <div className="gnav__card">
-                      <span className="gnav__institution-eyebrow">{ws.name}</span>
-                      <span className="gnav__institution-name" style={{ display: 'block' }}>
-                        {ws.scoped ? SCOPES[scope].name : 'Not tied to a school'}
-                      </span>
-                    </div>
-                  )}
-                  <p className="gnav__account-role" style={{ marginTop: 8 }}>
-                    School and service are picked together, in one place. Nothing here opens a new
-                    tab.
-                  </p>
-                </div>
-              )}
 
               <ul className="gnav__panel-menu">
                 <li>
