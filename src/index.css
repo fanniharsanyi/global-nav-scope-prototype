@@ -2141,3 +2141,37 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   line-height: 1.35;
   color: var(--text-mutedcolor);
 }
+
+/* InstUI's collapse control is a borderless 4px-radius button holding a
+   chevrons-left glyph, and its role pill is an 8px-radius outline with a
+   14/600 label — the same pill the account panel uses. */
+.gnav__toggle {
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+}
+.gnav__toggle:hover {
+  background: #e2eaf7;
+}
+.gnav__account-pill,
+.gnav__ident-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #2b7abc;
+  border-radius: 8px;
+  background: var(--nav-bg);
+  font-family: var(--fontfamily-base);
+  font-size: 14px;
+  font-weight: 600;
+  color: #2369a4;
+  white-space: nowrap;
+}
+[data-ui-dark='true'] .gnav__account-pill {
+  color: #7cb9ec;
+  border-color: #7cb9ec;
+}
+[data-ui-contrast='true'] .gnav__account-pill {
+  color: #0b4f86;
+}

@@ -268,3 +268,10 @@ export const IWarning = (p: P) => (
     <path d="M12 15.4h.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
   </svg>
 )
+
+export const IChevronsLeft = (p: P) => (
+  <svg width={p.size ?? 20} height={p.size ?? 20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="m11 17-5-5 5-5" />
+    <path d="m18 17-5-5 5-5" />
+  </svg>
+)

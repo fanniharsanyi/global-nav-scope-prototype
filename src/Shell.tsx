@@ -3,7 +3,7 @@ import type { JSX } from 'react'
 import { View, Alert, Tooltip } from '@instructure/ui'
 import {
   IDashboard, IFile, IAward, IUsers, IInbox, IHelp, ISettings,
-  IBell, IMaximize, IUpDown, IPanelClose, ILogOut,
+  IBell, IMaximize, IUpDown, ILogOut, IChevronsLeft,
   IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery,
   IMoon, ITextSize, IContrast, ICheck, IX, ISliders, IWarning
 } from './Icons'
@@ -214,7 +214,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 onClick={() => setRailOpen((v) => !v)}
               >
                 <span className={railOpen ? undefined : 'gnav__collapse-flip'}>
-                  <IPanelClose size={20} />
+                  <IChevronsLeft size={20} />
                 </span>
               </button>
             </div>
@@ -356,7 +356,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                   aria-label="Close account panel"
                   onClick={closeSubNav}
                 >
-                  <IPanelClose size={20} />
+                  <IChevronsLeft size={20} />
                 </button>
               </div>
 
