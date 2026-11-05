@@ -167,17 +167,23 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
 
         <div className={`gnav${railOpen ? ' gnav--expanded' : ''}`}>
           <nav className="gnav__rail" aria-label="Global">
-            {railOpen && (
+            <div className="gnav__head">
+              <span className="gnav__product-lockup">
+                <span className="gnav__product-mark" aria-hidden="true" />
+                {railOpen && <span className="gnav__product-name">Parchment</span>}
+              </span>
               <button
                 type="button"
                 className="gnav__toggle"
-                aria-label="Collapse sidebar, top of nav"
+                aria-label={railOpen ? 'Collapse navigation' : 'Expand navigation'}
                 aria-expanded={railOpen}
-                onClick={() => setRailOpen(false)}
+                onClick={() => setRailOpen((v) => !v)}
               >
-                <IPanelClose size={20} />
+                <span className={railOpen ? undefined : 'gnav__collapse-flip'}>
+                  <IPanelClose size={20} />
+                </span>
               </button>
-            )}
+            </div>
 
             {canChangeContext ? (
               <button
@@ -198,30 +204,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 {railContext}
               </div>
             )}
-
-            <button
-              type="button"
-              ref={accountBtn}
-              className={`gnav__account${subNavOpen ? ' gnav__account--active' : ''}`}
-              title={USER.name}
-              aria-label={`Account: ${USER.name}`}
-              aria-expanded={subNavOpen}
-              onClick={() => (subNavOpen ? closeSubNav() : setSubNavOpen(true))}
-            >
-              <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
-                {initials(USER.name)}
-              </span>
-              {railOpen && (
-                <span className="gnav__account-data">
-                  <span className="gnav__account-name" style={{ display: 'block' }}>
-                    {USER.name}
-                  </span>
-                  <span className="gnav__account-role" style={{ display: 'block' }}>
-                    {roleLabel(scope, config)}
-                  </span>
-                </span>
-              )}
-            </button>
 
             <ul className="gnav__items" data-tour="services">
               {items.map((i) => {
@@ -309,22 +291,28 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
 
             <button
               type="button"
-              className="gnav__collapse"
-              aria-label={railOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-              aria-expanded={railOpen}
-              onClick={() => setRailOpen((v) => !v)}
+              ref={accountBtn}
+              className={`gnav__account${subNavOpen ? ' gnav__account--active' : ''}`}
+              title={USER.name}
+              aria-label={`Account: ${USER.name}, ${roleLabel(scope, config)}`}
+              aria-expanded={subNavOpen}
+              onClick={() => (subNavOpen ? closeSubNav() : setSubNavOpen(true))}
             >
-              <span className={railOpen ? undefined : 'gnav__collapse-flip'}>
-                <IPanelClose />
+              <span className="gnav__account-top">
+                <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
+                  {initials(USER.name)}
+                </span>
+                {railOpen && <span className="gnav__account-pill">{roleLabel(scope, config)}</span>}
               </span>
-              {railOpen && <span className="gnav__collapse-label">Collapse sidebar</span>}
+              {railOpen && (
+                <span className="gnav__account-bottom">
+                  <span className="gnav__account-name">{USER.name}</span>
+                  <span className="gnav__account-gear" aria-hidden="true">
+                    <ISettings size={18} />
+                  </span>
+                </span>
+              )}
             </button>
-            <div className="gnav__product">
-              <span className="gnav__product-lockup">
-                <span className="gnav__product-mark" aria-hidden="true" />
-                {railOpen && <span className="gnav__product-name">Parchment</span>}
-              </span>
-            </div>
           </nav>
 
           {subNavOpen && (

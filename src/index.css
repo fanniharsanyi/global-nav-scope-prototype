@@ -1669,3 +1669,70 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   .srt__chev { transition: none; }
   .srt__drill:hover .srt__chev { transform: none; }
 }
+
+/* ── Global nav, Adam's structure: brand + collapse on top, account card at the foot ── */
+.gnav__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  flex-shrink: 0;
+  padding: var(--space-md) 0;
+  border-bottom: var(--nav-border-width) solid var(--nav-border-color);
+}
+.gnav--expanded .gnav__head {
+  flex-direction: row;
+  justify-content: space-between;
+  padding: var(--space-md) var(--nav-item-h-padding);
+}
+.gnav__head .gnav__toggle {
+  position: static;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-navitem);
+}
+.gnav__account {
+  margin-bottom: var(--space-sm);
+}
+.gnav--expanded .gnav__account {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: var(--space-sm);
+  border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-navitem);
+}
+.gnav__account-top,
+.gnav__account-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.gnav__account-bottom .gnav__account-name {
+  font-weight: var(--fontweight-body-strong);
+  font-size: var(--fontsize-textbase);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gnav__account-pill {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border: 1px solid var(--text-link-color);
+  border-radius: 999px;
+  font-family: var(--fontfamily-base);
+  font-weight: var(--fontweight-body-strong);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-link-color);
+  white-space: nowrap;
+}
+.gnav__account-gear {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--icon-sidenav-color);
+}
