@@ -2476,14 +2476,6 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
     width: auto;
   }
 }
-.ubtn--ai {
-  background: linear-gradient(135deg, #2b7abc, #8b5cf6);
-  color: #fff;
-  font-size: 18px;
-}
-.ubtn--ai:hover {
-  filter: brightness(1.08);
-}
 
 /* The way back from an identity switch, offered where the user is already
    looking. Inline in the banner so it inherits the alert's live region and is
@@ -2526,24 +2518,33 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 }
 
 /* ---- top-right chrome, to Adam's measurements ----
-   40x40, 12px radius, no chip. His buttons carry no fill until you touch
-   them, which is what lets four of them sit in a row without reading as a
-   toolbar of equal-weight actions. */
+   40x40, 12px radius, and a chip after all: InstUI's baseButton paints the
+   background on an inner span, so reading it off the button reports
+   transparent. The chip is a translucent navy, so it tints whatever surface
+   it lands on instead of fighting it. No hover change -- his are static. */
 .ubtn {
   width: 40px;
   height: 40px;
   border: 0;
   border-radius: 12px;
-  background: transparent;
-  color: #273540;
+  background: rgba(68, 112, 159, 0.2);
+  color: #1d354f;
   padding: 0;
   position: relative;
 }
 .ubtn:hover {
-  background: #e2eaf7;
+  background: rgba(68, 112, 159, 0.3);
 }
 .ubtn--on {
-  background: #d5e2f6;
+  background: rgba(68, 112, 159, 0.38);
+}
+
+/* The AI mark is the one button that carries brand weight: a purple-to-teal
+   gradient with the sparkle knocked out in white. */
+.ubtn--ai,
+.ubtn--ai:hover {
+  background: linear-gradient(180deg, #944fb3 0%, #027887 100%);
+  color: #fff;
 }
 .ubtn__dot {
   position: absolute;
@@ -2553,7 +2554,6 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   height: 8px;
   border-radius: 50%;
   background: var(--button-primary-bg);
-  border: 2px solid var(--background-pagecolor);
 }
 .ubtn__anchor {
   position: relative;
@@ -2605,4 +2605,24 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 /* "Expand to full width" is literal: the reading measure goes away. */
 .wrap__content--wide {
   max-width: none;
+}
+
+/* The chip is a translucent navy, which disappears on a dark surface and
+   takes the navy glyph with it. On dark it tints with light instead, and the
+   icons come up to meet it. The AI gradient carries its own colour, so it
+   only needs re-asserting past this selector's higher specificity. */
+[data-ui-dark='true'] .ubtn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #dbe4ef;
+}
+[data-ui-dark='true'] .ubtn:hover {
+  background: rgba(255, 255, 255, 0.17);
+}
+[data-ui-dark='true'] .ubtn--on {
+  background: rgba(255, 255, 255, 0.24);
+}
+[data-ui-dark='true'] .ubtn--ai,
+[data-ui-dark='true'] .ubtn--ai:hover {
+  background: linear-gradient(180deg, #a259c6 0%, #0d8e9e 100%);
+  color: #fff;
 }

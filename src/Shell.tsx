@@ -651,7 +651,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 <Tooltip renderTip="Open AI assistant">
                   <button
                     type="button"
-                    className="ubtn"
+                    className="ubtn ubtn--ai"
                     aria-label="Open AI assistant"
                     onClick={askAi}
                   >
