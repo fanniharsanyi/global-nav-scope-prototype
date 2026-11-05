@@ -197,12 +197,12 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     >
                       {initials(scopeName)}
                     </span>
-                    {railOpen && <span className="gnav__product-name">{scopeName}</span>}
+                    <span className="gnav__product-name">{scopeName}</span>
                   </>
                 ) : (
                   <>
                     <span className="gnav__product-mark" aria-hidden="true" />
-                    {railOpen && <span className="gnav__product-name">Parchment</span>}
+                    <span className="gnav__product-name">Parchment</span>
                   </>
                 )}
               </span>
@@ -239,7 +239,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                       <span className="gnav__iconwrap">
                         <Icon />
                       </span>
-                      {railOpen && <span className="gnav__item-label">{i.label}</span>}
+                      <span className="gnav__item-label">{i.label}</span>
                     </a>
                   </li>
                 )
@@ -272,13 +272,11 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                         <span className="gnav__iconwrap">
                           <p.Icon />
                         </span>
-                        {railOpen && <span className="gnav__item-label">{p.label}</span>}
-                        {railOpen && (
-                          <span className="gnav__item-ext">
-                            <IExternal size={14} />
-                            <span className="sr">Opens in a new tab</span>
-                          </span>
-                        )}
+                        <span className="gnav__item-label">{p.label}</span>
+                        <span className="gnav__item-ext">
+                          <IExternal size={14} />
+                          <span className="sr">Opens in a new tab</span>
+                        </span>
                       </a>
                     </li>
                   ))}
@@ -304,12 +302,10 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     <span className="gnav__iconwrap">
                       <IUpDown />
                     </span>
-                    {railOpen && (
-                      <span className="gnav__switch-text">
-                        <span className="gnav__switch-now">{ws.name}</span>
-                        <span className="gnav__switch-hint">Change school or service</span>
-                      </span>
-                    )}
+                    <span className="gnav__switch-text">
+                      <span className="gnav__switch-now">{ws.name}</span>
+                      <span className="gnav__switch-hint">Change school or service</span>
+                    </span>
                   </button>
                 </li>
               </ul>
@@ -331,16 +327,14 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     <IWarning size={11} />
                   </span>
                 </span>
-                {railOpen && <span className="gnav__account-pill">{currentRole}</span>}
+                <span className="gnav__account-pill">{currentRole}</span>
               </span>
-              {railOpen && (
-                <span className="gnav__account-bottom">
-                  <span className="gnav__account-name">{USER.name}</span>
-                  <span className="gnav__account-gear" aria-hidden="true">
-                    <ISettings size={18} />
-                  </span>
+              <span className="gnav__account-bottom">
+                <span className="gnav__account-name">{USER.name}</span>
+                <span className="gnav__account-gear" aria-hidden="true">
+                  <ISettings size={18} />
                 </span>
-              )}
+              </span>
             </button>
           </nav>
 

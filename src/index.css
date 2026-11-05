@@ -2175,3 +2175,85 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 [data-ui-contrast='true'] .gnav__account-pill {
   color: #0b4f86;
 }
+
+/* ---- collapse/expand motion ----
+   InstUI animates the rail over 300ms rather than swapping two layouts, so the
+   labels are always in the DOM and are clipped to zero width when collapsed.
+   Mounting them conditionally made the text pop in and out a frame before the
+   rail had finished resizing. */
+.gnav__rail {
+  transition:
+    width 0.3s ease,
+    padding 0.3s ease,
+    gap 0.3s ease;
+}
+.gnav__item,
+.gnav__account,
+.gnav__head,
+.gnav__institution {
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    width 0.3s ease,
+    height 0.3s ease,
+    padding 0.3s ease,
+    gap 0.3s ease,
+    border-color 0.3s ease;
+}
+.gnav__item-label,
+.gnav__item-ext,
+.gnav__head .gnav__product-name,
+.gnav__switch-text,
+.gnav__account-pill,
+.gnav__account-bottom {
+  transition:
+    opacity 0.2s ease,
+    max-width 0.3s ease,
+    margin 0.3s ease;
+}
+.gnav:not(.gnav--expanded) :is(.gnav__item-label, .gnav__item-ext, .gnav__head .gnav__product-name, .gnav__switch-text, .gnav__account-pill, .gnav__account-bottom) {
+  opacity: 0;
+  max-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.gnav:not(.gnav--expanded) .gnav__account-bottom {
+  height: 0;
+}
+.gnav--expanded :is(.gnav__item-label, .gnav__head .gnav__product-name, .gnav__switch-text, .gnav__account-pill, .gnav__account-bottom) {
+  max-width: 240px;
+}
+.gnav--expanded .gnav__item-ext {
+  max-width: 24px;
+}
+.gnav__toggle span {
+  display: inline-flex;
+  transition: transform 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gnav__rail,
+  .gnav__item,
+  .gnav__account,
+  .gnav__head,
+  .gnav__institution,
+  .gnav__item-label,
+  .gnav__item-ext,
+  .gnav__head .gnav__product-name,
+  .gnav__switch-text,
+  .gnav__account-pill,
+  .gnav__account-bottom,
+  .gnav__toggle span {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* The foot switcher carries two lines, so it cannot inherit the 44px item
+   height — the hint was overflowing its own padding. */
+.gnav--expanded .gnav__item--switch {
+  height: auto;
+  min-height: 44px;
+  align-items: center;
+}
