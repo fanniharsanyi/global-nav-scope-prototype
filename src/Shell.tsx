@@ -159,8 +159,19 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
     }
     setAnnounceKind('success')
     setUndoIdentity(null)
+    // The role pill is derived from scope, not chosen, so a scope change can
+    // silently relabel the account block -- a part of the screen the user was
+    // not looking at when they made the choice. Saying what the choice made
+    // them, here, is what keeps that from reading as a hidden identity switch.
+    const nextRole = roleLabel(nextScope, config)
+    const roleMoved = nextRole !== currentRole
+    const asWho = WORKSPACES[nextWs].scoped
+      ? roleMoved
+        ? ` You are ${nextRole} here, not ${currentRole}.`
+        : ` You are still ${nextRole} here.`
+      : ''
     const where = WORKSPACES[nextWs].scoped
-      ? `Now in ${WORKSPACES[nextWs].name} at ${SCOPES[nextScope].name}. This tab reloaded; no new tab was opened.`
+      ? `Now in ${WORKSPACES[nextWs].name} at ${SCOPES[nextScope].name}.${asWho} This tab reloaded; no new tab was opened.`
       : `Now in ${WORKSPACES[nextWs].name}. This workspace is not tied to a school.`
     setAnnouncement(makeDefault ? `${where} Saved as where you start.` : where)
     scopeTrigger.current?.focus()
