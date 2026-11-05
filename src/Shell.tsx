@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { View, Alert, Tooltip } from '@instructure/ui'
 import {
-  IDashboard, IFile, IAward, IUsers, IInbox, IHelp, IUser, ISettings,
+  IDashboard, IFile, IAward, IUsers, IInbox, IHelp, ISettings,
   IBell, IMaximize, IUpDown, IPanelClose, ILogOut, IChevronRight,
   IChart, IBook, ICalendar, IBuilding, IExternal, ICanvas, IMastery,
   IMoon, ITextSize, IContrast, ICheck, IX, ISliders
@@ -10,7 +10,7 @@ import {
 import {
   type Config, type PageId, type Preferences, type ScopeId, type UiPreferences,
   type WorkspaceId,
-  SCOPES, WORKSPACES, USER, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner, isAdmin,
+  SCOPES, WORKSPACES, USER, IDENTITIES, availableScopes, workspacesFor, pagesFor, roleLabel, isLearner, isAdmin,
   resolveStart
 } from './model'
 import ContextModal from './ContextModal'
@@ -65,6 +65,12 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const [workspace, setWorkspace] = useState<WorkspaceId>(start.workspace)
   const [page, setPage] = useState<PageId>(pagesFor(start.workspace)[0].id)
   const [subNavOpen, setSubNavOpen] = useState(false)
+  const [identityOpen, setIdentityOpen] = useState(false)
+  const [adminReturn, setAdminReturn] = useState<{
+    scope: ScopeId | null
+    workspace: WorkspaceId
+    page: PageId | null
+  } | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [tourOpen, setTourOpen] = useState(config.onboarding)
   const [dirty, setDirty] = useState(false)
@@ -76,6 +82,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
   const accountBtn = useRef<HTMLButtonElement | null>(null)
   const panelTitle = useRef<HTMLHeadingElement | null>(null)
   const scopeTrigger = useRef<HTMLButtonElement | null>(null)
+  const identityBtn = useRef<HTMLButtonElement | null>(null)
 
   const ws = WORKSPACES[workspace]
   const items = pagesFor(workspace)
@@ -92,7 +99,37 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
 
   const closeSubNav = () => {
     setSubNavOpen(false)
+    setIdentityOpen(false)
     accountBtn.current?.focus()
+  }
+
+  // Identity (who you are) is a different axis from scope (what you are
+  // looking at), so it lives in the account panel rather than in the scope
+  // control. Leaving the admin side stores where you were, so coming back
+  // returns you to the same place instead of a generic landing page.
+  const onLearnerSide = workspace === 'learner'
+  const bothIdentities = isAdmin(config) && isLearner(config)
+  const currentRole = onLearnerSide ? 'Learner' : roleLabel(scope, config)
+
+  const switchIdentity = (to: 'admin' | 'learner') => {
+    setIdentityOpen(false)
+    if (to === 'learner') {
+      if (!onLearnerSide) setAdminReturn({ scope, workspace, page })
+      setWorkspace('learner')
+      setPage(pagesFor('learner')[0].id)
+      setAnnounceKind('success')
+      setAnnouncement(`Switched to your learner account, ${USER.name}.`)
+    } else {
+      const back = adminReturn ?? { scope: start.scope, workspace: start.workspace, page: null }
+      setScope(back.scope)
+      setWorkspace(back.workspace)
+      setPage(back.page ?? pagesFor(back.workspace)[0].id)
+      setAnnounceKind('success')
+      setAnnouncement(
+        `Switched to ${roleLabel(back.scope, config)}. You are back in ${WORKSPACES[back.workspace].name}.`
+      )
+    }
+    closeSubNav()
   }
 
   const applyContext = (nextScope: ScopeId, nextWs: WorkspaceId, makeDefault = false) => {
@@ -145,7 +182,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
           <span className="gnav__ctx-service">{ws.name}</span>
         </span>
       )}
-      {canChangeContext && railOpen && (
+      {canChangeContext && ws.scoped && railOpen && (
         <span className="gnav__institution-caret">
           <IUpDown size={18} />
         </span>
@@ -185,7 +222,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               </button>
             </div>
 
-            {canChangeContext ? (
+            {canChangeContext && ws.scoped ? (
               <button
                 type="button"
                 className="gnav__institution gnav__institution--switch gnav__institution--ctx"
@@ -294,7 +331,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               ref={accountBtn}
               className={`gnav__account${subNavOpen ? ' gnav__account--active' : ''}`}
               title={USER.name}
-              aria-label={`Account: ${USER.name}, ${roleLabel(scope, config)}`}
+              aria-label={`Account: ${USER.name}, ${currentRole}`}
               aria-expanded={subNavOpen}
               onClick={() => (subNavOpen ? closeSubNav() : setSubNavOpen(true))}
             >
@@ -302,7 +339,7 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
                   {initials(USER.name)}
                 </span>
-                {railOpen && <span className="gnav__account-pill">{roleLabel(scope, config)}</span>}
+                {railOpen && <span className="gnav__account-pill">{currentRole}</span>}
               </span>
               {railOpen && (
                 <span className="gnav__account-bottom">
@@ -331,16 +368,78 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                 </button>
               </div>
 
-              <div className="gnav__profile">
+              <div
+                className="gnav__profile"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape' && identityOpen) {
+                    e.stopPropagation()
+                    setIdentityOpen(false)
+                    identityBtn.current?.focus()
+                  }
+                }}
+              >
                 <div className="gnav__profile-card gnav__profile-card--static">
                   <span className="gnav__profile-text">
-                    <span className="gnav__profile-name">{USER.name}</span>
+                    <span className="gnav__profile-namerow">
+                      <span className="gnav__profile-name">{USER.name}</span>
+                      {bothIdentities && (
+                        <button
+                          type="button"
+                          ref={identityBtn}
+                          className="gnav__identity-trigger"
+                          aria-label={`Switch account. You are signed in as ${currentRole}`}
+                          aria-haspopup="menu"
+                          aria-expanded={identityOpen}
+                          onClick={() => setIdentityOpen((v) => !v)}
+                        >
+                          <IUpDown size={18} />
+                        </button>
+                      )}
+                    </span>
                     <span className="gnav__profile-email">{USER.email}</span>
                     <span className="gnav__profile-tags">
-                      <span className="gnav__profile-badge">{roleLabel(scope, config)}</span>
+                      <span className="gnav__profile-badge">{currentRole}</span>
                     </span>
                   </span>
                 </div>
+
+                {identityOpen && (
+                  <div
+                    className="gnav__identity-menu"
+                    role="menu"
+                    aria-label="Switch account"
+                  >
+                    {IDENTITIES.map((opt) => {
+                      const isCurrent = opt.id === (onLearnerSide ? 'learner' : 'admin')
+                      const label =
+                        opt.id === 'admin' ? roleLabel(adminReturn?.scope ?? scope, config) : opt.label
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={isCurrent}
+                          className="gnav__identity-opt"
+                          onClick={() => switchIdentity(opt.id)}
+                        >
+                          <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
+                            {initials(USER.name)}
+                          </span>
+                          <span className="gnav__identity-text">
+                            <span className="gnav__identity-name">{label}</span>
+                            <span className="gnav__identity-hint">{opt.hint}</span>
+                          </span>
+                          {isCurrent && (
+                            <span className="gnav__identity-check">
+                              <ICheck size={18} />
+                              <span className="sr">Current account</span>
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {scope && (
@@ -378,25 +477,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               )}
 
               <ul className="gnav__panel-menu">
-                <li>
-                <button
-                  type="button"
-                  className="gnav__panel-link"
-                  disabled={!isLearner(config)}
-                  title={
-                    isLearner(config)
-                      ? undefined
-                      : 'This sign-in has no learner account of its own.'
-                  }
-                  onClick={() => {
-                    setWorkspace('learner')
-                    setPage('records')
-                    closeSubNav()
-                  }}
-                >
-                  <IUser /> My Parchment account
-                </button>
-                </li>
                 <li>
                 <button
                   type="button"

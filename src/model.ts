@@ -652,6 +652,20 @@ export const USER = {
   email: 'peter_panda@bambusa-university.edu'
 }
 
+/**
+ * The two sides of one sign-in. Admin and learner are the same person with
+ * different entitlements, so this is an identity switch, not a scope change —
+ * which is why it sits in the account panel and not in the scope control.
+ */
+export const IDENTITIES: Array<{
+  id: 'admin' | 'learner'
+  label: string
+  hint: string
+}> = [
+  { id: 'admin', label: 'Admin', hint: 'Manage school services' },
+  { id: 'learner', label: 'Learner', hint: 'Your credentials and orders' }
+]
+
 export function roleLabel(scope: ScopeId | null, _c: Config): string {
   if (!scope) return 'Learner'
   return SCOPES[scope].kind === 'district' ? 'District admin' : 'Admin'

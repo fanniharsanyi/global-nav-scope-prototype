@@ -835,9 +835,11 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   font-size: 16px;
   line-height: 1.25;
   color: var(--heading-basecolor);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  /* unscoped names like "My Parchment account" are long; wrap rather than clip */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 /* only the page list absorbs the leftover height */
 .gnav__items--products,
@@ -1735,4 +1737,94 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   display: flex;
   flex-shrink: 0;
   color: var(--icon-sidenav-color);
+}
+
+/* ── Identity switcher: who you are, not where you are ── */
+.gnav__profile-card--static {
+  align-items: center;
+}
+.gnav__identity-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-navitem);
+  color: var(--text-mutedcolor);
+  cursor: pointer;
+}
+.gnav__identity-trigger:hover {
+  background: #eef1f8;
+  color: var(--heading-basecolor);
+}
+.gnav__identity-trigger:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: 2px;
+}
+.gnav__identity-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-xs);
+  background: var(--nav-bg);
+  border: 1px solid var(--nav-border-color);
+  border-radius: var(--radius-card-sm);
+  box-shadow: var(--shadow-elevation1);
+}
+.gnav__identity-opt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-navitem);
+  text-align: left;
+  cursor: pointer;
+}
+.gnav__identity-opt:hover {
+  background: #eef1f8;
+}
+.gnav__identity-opt:focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  outline-offset: -2px;
+}
+.gnav__identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+.gnav__identity-name {
+  font-family: var(--fontfamily-base);
+  font-weight: var(--fontweight-body-strong);
+  font-size: var(--fontsize-textbase);
+  color: var(--heading-basecolor);
+}
+.gnav__identity-hint {
+  font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textsm);
+  color: var(--text-mutedcolor);
+}
+.gnav__identity-check {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-link-color);
+}
+.gnav__profile-namerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-width: 0;
 }
