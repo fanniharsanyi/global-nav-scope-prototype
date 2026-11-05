@@ -2508,3 +2508,19 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* States the district-admin rule in the column that decides it. Quiet, because
+   it is a rule you read once and then stop needing. */
+.ctx__rolehint {
+  margin: var(--space-xs) 0 var(--space-md);
+  padding-left: var(--space-sm);
+  border-left: 2px solid var(--nav-border-color);
+  font-family: var(--fontfamily-base);
+  font-size: var(--fontsize-textsm);
+  line-height: 1.45;
+  color: var(--text-mutedcolor);
+}
+.ctx__rolehint strong {
+  font-weight: var(--fontweight-body-strong);
+  color: var(--heading-basecolor);
+}

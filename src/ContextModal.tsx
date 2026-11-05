@@ -219,6 +219,16 @@ export default function ContextModal({
                         : `${n} of your ${all} schools run ${WORKSPACES[pickedWs].name}.`
                     })()}
             </p>
+            {/* This column is the District admin / Admin control. It was never
+                labelled as one, so the role looked like it changed on its own.
+                Saying the rule once here beats making people infer it from
+                three rows of meta text. */}
+            {schools.length > 1 && pickedWs !== 'overview' && (
+              <p className="ctx__rolehint">
+                Every school picks itself. The first row is all of them at once, which is
+                what makes you <strong>District admin</strong> instead of <strong>Admin</strong>.
+              </p>
+            )}
 
             {schools.length > 1 && (
               <TextInput
@@ -257,7 +267,10 @@ export default function ContextModal({
                       </span>
                       <span className="scoperow__meta">
                         {run !== null
-                          ? `All schools that run it · ${run} of 3 · ${openRequests('district', pickedWs as ServiceId)} open`
+                          ? `District admin · all ${run} schools that run it · ${openRequests(
+                              'district',
+                              pickedWs as ServiceId
+                            )} open`
                           : entitlementSummary(id, config)}
                       </span>
                     </span>
