@@ -310,23 +310,6 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               </>
             )}
 
-            <div className="gnav__grouprule" role="presentation" />
-            <ul className="gnav__items">
-              <li>
-                <a
-                  className="gnav__item"
-                  href="#help"
-                  aria-label="Help"
-                  onClick={(e) => e.preventDefault()}
-                >
-                  <span className="gnav__iconwrap">
-                    <IHelp />
-                  </span>
-                  {railOpen && <span className="gnav__item-label">Help</span>}
-                </a>
-              </li>
-            </ul>
-
             <button
               type="button"
               ref={accountBtn}
@@ -339,6 +322,9 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
               <span className="gnav__account-top">
                 <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
                   {initials(USER.name)}
+                  <span className="gnav__ident-flag gnav__ident-flag--rail">
+                    <IWarning size={11} />
+                  </span>
                 </span>
                 {railOpen && <span className="gnav__account-pill">{currentRole}</span>}
               </span>
@@ -428,32 +414,25 @@ export default function Shell({ config, prefs, onPrefs, onSignOut }: Props) {
                     role="menu"
                     aria-label="Switch account"
                   >
-                    {IDENTITIES.map((opt) => {
-                      const isCurrent = opt.id === (onLearnerSide ? 'learner' : 'admin')
+                    {IDENTITIES.filter(
+                      (opt) => opt.id !== (onLearnerSide ? 'learner' : 'admin'),
+                    ).map((opt) => {
                       const label =
                         opt.id === 'admin' ? roleLabel(adminReturn?.scope ?? scope, config) : opt.label
                       return (
                         <button
                           key={opt.id}
                           type="button"
-                          role="menuitemradio"
-                          aria-checked={isCurrent}
+                          role="menuitem"
                           className="gnav__identity-opt"
                           onClick={() => switchIdentity(opt.id)}
                         >
-                          <span className="gnav__avatar gnav__avatar--pp" aria-hidden="true">
+                          <span className="gnav__identity-avatar" aria-hidden="true">
                             {initials(USER.name)}
                           </span>
-                          <span className="gnav__identity-text">
-                            <span className="gnav__identity-name">{label}</span>
-                            <span className="gnav__identity-hint">{opt.hint}</span>
+                          <span className="gnav__identity-name">
+                            {USER.name} | {label}
                           </span>
-                          {isCurrent && (
-                            <span className="gnav__identity-check">
-                              <ICheck size={18} />
-                              <span className="sr">Current account</span>
-                            </span>
-                          )}
                         </button>
                       )
                     })}

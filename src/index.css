@@ -1978,3 +1978,94 @@ h1, h2, h3, h4 { font-family: var(--fontfamily-heading); }
 [data-ui-contrast='true'][data-ui-dark='true'] .gnav__ident-avatar {
   color: #a8d4f5;
 }
+
+/* Switch-account popover, matched to InstUI: a 302px card that escapes the
+   224px panel, 12px radius, #8d959f hairline, and 32px ringed avatars with a
+   single-line "Name | Role" label. */
+.gnav__identity-menu {
+  width: 302px;
+  padding: 6px 0;
+  border: 1px solid #8d959f;
+  border-radius: 12px;
+  background: var(--nav-bg);
+  box-shadow:
+    rgba(35, 68, 101, 0.1) 0 4px 8px 3px,
+    rgba(35, 68, 101, 0.15) 0 1px 3px;
+}
+.gnav__identity-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 13px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.gnav__identity-opt:hover {
+  background: #e2eaf7;
+}
+.gnav__identity-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid #8d959f;
+  border-radius: 50%;
+  background: var(--nav-bg);
+  font-family: var(--fontfamily-base);
+  font-size: 12px;
+  font-weight: 600;
+  color: #2871af;
+}
+.gnav__identity-name {
+  font-family: var(--fontfamily-base);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--heading-basecolor);
+}
+[data-ui-dark='true'] .gnav__identity-avatar {
+  color: #7cb9ec;
+}
+[data-ui-dark='true'] .gnav__identity-opt:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* InstUI's rail avatar is a 40px white disc with a #8d959f hairline and blue
+   initials — not a filled swatch — and the account card is pinned to the foot. */
+.gnav__avatar--pp {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #8d959f;
+  background: var(--nav-bg);
+  color: #2871af;
+  font-size: 14px;
+  font-weight: 600;
+}
+.gnav__account {
+  margin-top: auto;
+}
+[data-ui-dark='true'] .gnav__avatar--pp {
+  color: #7cb9ec;
+}
+
+/* The popover is a portal in InstUI: it clears the panel entirely rather than
+   sitting on top of it, and the rail avatar carries the same status dot. */
+.gnav__identity-menu {
+  top: 0;
+  left: calc(100% + 12px);
+}
+.gnav__avatar--pp {
+  position: relative;
+  overflow: visible;
+}
+.gnav__ident-flag--rail {
+  width: 18px;
+  height: 18px;
+  top: -3px;
+  right: -3px;
+}
