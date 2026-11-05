@@ -608,7 +608,12 @@ export function schoolsForService(ws: WorkspaceId, c: Config): ScopeId[] {
   if (!WORKSPACES[ws].scoped) return []
   // The overview is the district roll-up itself, so it has exactly one home.
   if (ws === 'overview') return c.districtAdmin && isAdmin(c) ? ['district'] : []
-  return availableScopes(c).filter((s) => (servicesFor(s, c) as WorkspaceId[]).includes(ws))
+  // A service is always worked at a school. Seeing the whole district at once
+  // is what the overview is for, and what being a district admin means -- so
+  // the district is not offered as if it were a fourth school.
+  return availableScopes(c).filter(
+    (s) => SCOPES[s].kind !== 'district' && (servicesFor(s, c) as WorkspaceId[]).includes(ws)
+  )
 }
 
 /** Every service reachable by this user, across every school they can see. */

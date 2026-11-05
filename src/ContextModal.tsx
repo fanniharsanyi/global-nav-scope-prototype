@@ -6,7 +6,7 @@ import { ISearch } from './Icons'
 import {
   type Config, type ScopeId, type ServiceId, type WorkspaceId,
   SCOPES, WORKSPACES, SERVICES, allServices, availableScopes, entitlementSummary, schoolsForService,
-  schoolsOffering, openRequests, roleLabel, LEGACY_ROLE_NAMES
+  SERVICE_METRIC, roleLabel, LEGACY_ROLE_NAMES
 } from './model'
 
 type Props = {
@@ -58,13 +58,14 @@ export default function ContextModal({
       return
     }
     const landing = next.includes(pickedScope) ? pickedScope : next[0]
-    const n = next.filter((sc) => SCOPES[sc].kind !== 'district').length
-    const district = next.some((sc) => SCOPES[sc].kind === 'district')
+    if (id === 'overview') {
+      setAnnounce(`${WORKSPACES[id].name} selected. ${SCOPES[landing].name} selected.`)
+      return
+    }
+    const n = next.length
     setAnnounce(
       `${WORKSPACES[id].name} selected. School list updated, ${n} ` +
-        `${n === 1 ? 'school' : 'schools'}` +
-        `${district ? ' plus the whole district' : ''}. ` +
-        `${SCOPES[landing].name} selected.`
+        `${n === 1 ? 'school' : 'schools'}. ${SCOPES[landing].name} selected.`
     )
   }
 
@@ -249,10 +250,11 @@ export default function ContextModal({
               {rows.map((id) => {
                 const sc = SCOPES[id]
                 const on = pickedScope === id
-                const run =
-                  pickedWs === 'overview' || sc.kind !== 'district'
-                    ? null
-                    : schoolsOffering(pickedWs as ServiceId).length
+                // You have already said which service. Listing every other
+                // service the school runs answers a question nobody asked and
+                // buries the one that matters: which school needs me here.
+                const metric =
+                  pickedWs === 'overview' ? null : SERVICE_METRIC[pickedWs as ServiceId]
                 return (
                   <label key={id} className={`scoperow${on ? ' scoperow--on' : ''}`}>
                     <input
@@ -270,11 +272,8 @@ export default function ContextModal({
                         )}
                       </span>
                       <span className="scoperow__meta">
-                        {run !== null
-                          ? `${roleLabel(id, config)} · all ${run} schools that run it · ${openRequests(
-                              'district',
-                              pickedWs as ServiceId
-                            )} open`
+                        {metric
+                          ? `${roleLabel(id, config)} · ${metric.of(id)} ${metric.label}`
                           : entitlementSummary(id, config)}
                       </span>
                     </span>
